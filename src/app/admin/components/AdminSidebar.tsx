@@ -1,4 +1,3 @@
-// src/app/admin/components/AdminSidebar.tsx
 
 "use client";
 import { Layout, Menu, Button } from "antd";
@@ -29,11 +28,6 @@ export default function AdminSidebar(): JSX.Element {
       // Chuyển trang
       router.push(path); 
 
-      // Do Next.js tự động tắt loading khi trang mới tải xong, 
-      // chúng ta chỉ cần đảm bảo rằng trạng thái loading được bật.
-      // Tuy nhiên, để giả lập độ trễ chuyển trang (nếu bạn cần test), bạn có thể thêm:
-      // await new Promise(resolve => setTimeout(resolve, 500)); 
-      // setLoading(false); // Sẽ được gọi sau khi trang mới render
     }
   };
 
@@ -41,7 +35,7 @@ export default function AdminSidebar(): JSX.Element {
     {
       key: "/admin/dashboard",
       icon: <BarChartOutlined className="text-xl" />,
-      label: "Bảng điều khiển", // Chỉ cần Label, không cần Link
+      label: "Bảng điều khiển",
     },
     {
       key: "/admin/user-management",

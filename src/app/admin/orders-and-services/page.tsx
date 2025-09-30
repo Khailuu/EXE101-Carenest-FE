@@ -1,5 +1,3 @@
-// src/app/admin/orders-and-services/page.tsx
-
 "use client";
 
 import { useState, JSX } from 'react';

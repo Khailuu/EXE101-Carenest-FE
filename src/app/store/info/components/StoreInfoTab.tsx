@@ -1,5 +1,3 @@
-// src/app/store/info/components/StoreInfoTab.tsx
-
 import { Card, Form, Input, Button, Upload, Row, Col, TimePicker } from 'antd';
 import { UploadOutlined, SaveOutlined } from '@ant-design/icons';
 import { JSX } from 'react';

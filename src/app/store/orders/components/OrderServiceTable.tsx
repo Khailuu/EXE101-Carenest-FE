@@ -1,5 +1,3 @@
-// components/OrderServiceTable.tsx
-
 import { Table, Button, Checkbox, Tooltip } from "antd";
 import type { ColumnsType } from 'antd/es/table';
 import { ServiceOrder, Service, formatCurrency, renderStatusTag } from "../hooks/useOrderData";

@@ -1,5 +1,3 @@
-// src/app/store/my-store/services/page.tsx
-
 "use client";
 
 import { JSX } from 'react';

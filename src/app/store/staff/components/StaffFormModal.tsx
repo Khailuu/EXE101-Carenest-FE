@@ -1,5 +1,3 @@
-// src/app/store/staff/components/StaffFormModal.tsx
-
 import { Button, Input, Modal, Form, Upload, Row, Col, DatePicker, Select, Switch, message, Avatar } from 'antd';
 import { UploadOutlined, SaveOutlined } from '@ant-design/icons';
 import { StaffData, StaffRole, StaffStatus } from '../page';

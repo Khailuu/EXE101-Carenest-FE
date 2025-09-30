@@ -1,5 +1,3 @@
-// page.tsx (OrdersPage)
-
 "use client";
 import { JSX } from "react";
 import { Button, Card, Avatar } from "antd";

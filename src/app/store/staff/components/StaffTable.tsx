@@ -1,5 +1,3 @@
-// src/app/store/staff/components/StaffTable.tsx
-
 import { Table, Button, Avatar, Tooltip, Popconfirm, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';

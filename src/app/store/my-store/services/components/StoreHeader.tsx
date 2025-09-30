@@ -1,5 +1,3 @@
-// src/app/store/my-store/services/components/StoreHeader.tsx
-
 import { Avatar } from 'antd';
 import { JSX } from 'react';
 

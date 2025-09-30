@@ -1,5 +1,3 @@
-// src/app/admin/community-management/page.tsx
-
 "use client";
 
 import { useState, JSX } from 'react';

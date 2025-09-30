@@ -1,6 +1,4 @@
-// src/app/admin/components/DualAxesChart.tsx
-
-"use client"; // BẮT BUỘC
+"use client"; 
 
 import { DualAxes } from '@ant-design/charts';
 import { Empty } from 'antd';

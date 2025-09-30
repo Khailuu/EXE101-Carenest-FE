@@ -1,5 +1,3 @@
-// src/app/store/my-store/services/components/ServiceProductTabs.tsx
-
 import { Button } from 'antd';
 import { StoreTabType } from '../hooks/useStoreData'; 
 import { JSX } from 'react';

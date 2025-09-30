@@ -1,10 +1,8 @@
-// src/app/store/staff/page.tsx
-
 "use client";
 
 import { useState, JSX } from 'react';
 import { message } from 'antd';
-import StoreHeader from '../info/components/StoreHeader'; // Dùng lại Header đã sửa
+import StoreHeader from '../info/components/StoreHeader'; 
 import StaffFilters from './components/StaffFilters';
 import StaffTable from './components/StaffTable';
 import StaffFormModal from './components/StaffFormModal';
@@ -17,8 +15,8 @@ export interface StaffData {
     avatar: string;
     name: string;
     email: string;
-    dob: string; // Date of Birth
-    startDate: string; // Ngày bắt đầu làm việc
+    dob: string; 
+    startDate: string; 
     branch: string;
     role: StaffRole;
     status: StaffStatus;
@@ -51,8 +49,8 @@ export default function StaffManagementPage(): JSX.Element {
             const newKey = String(staffData.length > 0 ? Math.max(...staffData.map(s => Number(s.key))) + 1 : 1);
             const newStaff: StaffData = { 
                 key: newKey, 
-                avatar: 'https://i.pravatar.cc/150?img=51', // Avatar mặc định
-                status: 'Hoạt động', // Mặc định là Hoạt động khi tạo mới
+                avatar: 'https://i.pravatar.cc/150?img=51', 
+                status: 'Hoạt động', 
                 ...values 
             };
             setStaffData(prev => [newStaff, ...prev]);

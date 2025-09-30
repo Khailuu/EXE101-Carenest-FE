@@ -1,5 +1,3 @@
-// src/app/store/my-store/services/components/StoreFilters.tsx
-
 import {
   Button,
   Input,

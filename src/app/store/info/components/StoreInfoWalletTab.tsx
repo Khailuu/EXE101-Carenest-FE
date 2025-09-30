@@ -1,5 +1,3 @@
-// src/app/store/info/components/StoreInfoWalletTab.tsx
-
 import { Card, Button, Divider, QRCode } from 'antd';
 import { DollarCircleOutlined, QrcodeOutlined } from '@ant-design/icons';
 import { JSX } from 'react';

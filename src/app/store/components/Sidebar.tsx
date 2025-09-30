@@ -19,7 +19,7 @@ export default function Sidebar() {
 
   // Hàm xử lý Đăng xuất
   const handleLogout = () => {
-    router.push("/login"); // <-- CHUYỂN HƯỚNG
+    router.push("/login");
   };
 
   const items = [
@@ -119,10 +119,6 @@ export default function Sidebar() {
           color: "white",
           fontSize: "16px",
         }}
-        itemHoverColor="#fff"
-        itemActiveBg="#fff" 
-        itemSelectedColor="#0d9488" 
-        itemSelectedBg="#fff" 
         theme="dark" 
       />
 

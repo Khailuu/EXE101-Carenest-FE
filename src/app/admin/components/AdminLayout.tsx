@@ -1,5 +1,3 @@
-// src/app/admin/components/AdminLayout.tsx
-
 "use client";
 
 import { Layout, Spin } from 'antd';
@@ -9,13 +7,12 @@ import { LoadingProvider, useLoading } from './LoadingContext'; // Import Contex
 
 const { Content } = Layout;
 
-// Component Layout chính (đã bọc logic Spin)
+// Component Layout chính 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isLoading } = useLoading();
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
-            {/* Sidebar (Cố định bên trái) */}
             <AdminSidebar />
             
             <Layout style={{ marginLeft: 260 }}>

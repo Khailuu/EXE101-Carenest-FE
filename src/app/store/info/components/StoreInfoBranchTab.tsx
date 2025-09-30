@@ -1,5 +1,3 @@
-// src/app/store/info/components/StoreInfoBranchTab.tsx
-
 import { useState, JSX } from 'react';
 import { Button, Table, Modal, Form, Input, Popconfirm, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';

@@ -1,5 +1,3 @@
-// src/app/store/my-store/services/components/ServiceTable.tsx
-
 import { Table, Button, Avatar, Tooltip, Popconfirm } from 'antd'; // Thêm Popconfirm
 import type { ColumnsType } from 'antd/es/table';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';

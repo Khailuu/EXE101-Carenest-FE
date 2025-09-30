@@ -1,5 +1,3 @@
-// src/app/store/info/components/StoreInfoPasswordTab.tsx
-
 import { Form, Input, Button, message } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { JSX } from 'react';

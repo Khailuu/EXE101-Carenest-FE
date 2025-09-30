@@ -9,18 +9,18 @@ export default function DashboardPage() {
   // Mock data được đặt tên lại cho rõ ràng, giá trị giữ nguyên
   const mockData = {
     // Row 1: Thống kê cuộc hẹn/đơn hàng
-    todayAppointments: 45, // Tổng cuộc hẹn hôm nay
-    pendingConfirmation: 12, // Chưa xác nhận
-    inProgress: 8, // Đang tiến hành/Xử lý
-    completedCount: 156, // Hoàn thành
+    todayAppointments: 45, 
+    pendingConfirmation: 12, 
+    inProgress: 8, 
+    completedCount: 156, 
 
     // Row 2 & 3: Thống kê tài chính
-    monthlyRevenue: 45650000, // Doanh thu tháng này
-    commissionRevenue: 6847500, // Hoa hồng/Doanh thu tháng trước
-    dailyRevenue: 2450000, // Doanh thu hôm nay
-    earnedCommission: 367500, // Hoa hồng thu được
-    completedOrders: 1023, // Số đơn hoàn thành (hoặc giao dịch thành công)
-    currentTotalRevenue: 45650000 // Doanh thu hiện tại (có thể là lũy kế năm)
+    monthlyRevenue: 45650000, 
+    commissionRevenue: 6847500, 
+    dailyRevenue: 2450000, 
+    earnedCommission: 367500, 
+    completedOrders: 1023, 
+    currentTotalRevenue: 45650000 
   };
 
   const formatCurrency = (amount: number): string => {
@@ -30,13 +30,10 @@ export default function DashboardPage() {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       
-      {/* ------------------------------------------------------------------- */}
-      {/* HEADER: Giữ nguyên cấu trúc Pettiny (Màu xanh mint) */}
       <div className="bg-[#E0FAF7] py-6 border-b-4 border-teal-500 mb-6 rounded-lg shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
           <Avatar
             size={64}
-            // Giả lập logo Pettiny
             src="https://i.pravatar.cc/150?img=9"
             className="shadow-md border-2 border-white bg-white"
           />

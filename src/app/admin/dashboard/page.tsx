@@ -1,5 +1,3 @@
-// src/app/admin/dashboard/page.tsx
-
 "use client";
 
 import { useState, useMemo, JSX } from 'react';
