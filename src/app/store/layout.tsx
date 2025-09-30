@@ -15,21 +15,18 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
     // *** LOGIC QUAN TRỌNG ĐỂ TẮT LOADING ***
     useEffect(() => {
-        // Sau khi URL thay đổi (trang đã tải xong), tắt loading
         if (isLoading) {
-             // Dùng setTimeout nhỏ để đảm bảo quá trình render nội dung đã xong
             const timer = setTimeout(() => {
                 setLoading(false);
             }, 100); 
 
             return () => clearTimeout(timer);
         }
-    }, [pathname]); // Theo dõi sự thay đổi của path
+    }, [pathname]); 
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
             {/* Sidebar */}
-            {/* Cần đặt marginLeft bằng width của Sidebar (280px) để content không bị che */}
             <Sidebar />
             
             {/* Layout chứa Content */}
