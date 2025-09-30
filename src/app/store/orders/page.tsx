@@ -1,13 +1,14 @@
 "use client";
-import { JSX } from "react";
+import { JSX, SetStateAction } from "react";
 import { Button, Card, Avatar } from "antd";
-import { useOrderData } from "./hooks/useOrderData";
+import { StatusType, TabType, useOrderData } from "./hooks/useOrderData";
 
 // Components
 import StatusFilterButtons from "./components/StatusFilterButtons";
 import OrderFilters from "./components/OrderFilters";
 import OrderServiceTable from "./components/OrderServiceTable";
 import OrderProductTable from "./components/OrderProductTable";
+import OrderActionModals from "./components/OrderActionModals"; // <--- IMPORT MODAL COMPONENT
 
 export default function OrdersPage(): JSX.Element {
   const {
@@ -18,6 +19,11 @@ export default function OrdersPage(): JSX.Element {
     filteredServiceOrders,
     filteredProductOrders,
     statusButtons,
+    // LẤY CÁC HÀM XỬ LÝ ACTION VÀ TRẠNG THÁI MODAL TỪ HOOK
+    openDetailsModal,
+    openConfirmServiceModal,
+    openCancelServiceModal, // Thêm hàm Hủy
+    ...hookData // Lấy tất cả các dữ liệu/hàm còn lại (cho Modal)
   } = useOrderData();
 
   return (
@@ -81,11 +87,27 @@ export default function OrdersPage(): JSX.Element {
 
         {/* Table */}
         {activeTab === "service" ? (
-          <OrderServiceTable data={filteredServiceOrders} />
+          <OrderServiceTable 
+            data={filteredServiceOrders} 
+            openDetailsModal={openDetailsModal}
+            openConfirmServiceModal={openConfirmServiceModal}
+            openCancelServiceModal={openCancelServiceModal}
+          />
         ) : (
           <OrderProductTable data={filteredProductOrders} />
         )}
       </Card>
+
+      {/* MODAL XỬ LÝ ACTION */}
+      <OrderActionModals 
+      activeTab={"service"} setActiveTab={function (value: SetStateAction<TabType>): void {
+        throw new Error("Function not implemented.");
+      } } activeStatus={"processing"} setActiveStatus={function (value: SetStateAction<StatusType>): void {
+        throw new Error("Function not implemented.");
+      } } filteredServiceOrders={[]} filteredProductOrders={[]} statusButtons={[]} {...hookData}
+      openDetailsModal={openDetailsModal}
+      openConfirmServiceModal={openConfirmServiceModal}
+      openCancelServiceModal={openCancelServiceModal}      />
     </div>
   );
 }

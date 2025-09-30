@@ -5,15 +5,19 @@ import { EnvironmentOutlined } from "@ant-design/icons";
 
 interface OrderServiceTableProps {
     data: ServiceOrder[];
+    openDetailsModal: (order: ServiceOrder) => void;
+    openConfirmServiceModal: (order: ServiceOrder) => void;
+    // Thêm hàm hủy để có thể hủy trực tiếp từ table (nếu cần)
+    openCancelServiceModal: (order: ServiceOrder) => void; 
 }
 
-const serviceColumns: ColumnsType<ServiceOrder> = [
+const serviceColumns = (props: OrderServiceTableProps): ColumnsType<ServiceOrder> => [
     {
       title: "Mã ĐH",
       dataIndex: "key",
       key: "key",
       width: 100,
-      render: (text: string, record: ServiceOrder) => (
+      render: (text: string) => (
         <div className="flex items-center">
           <Checkbox 
             checked={false} 
@@ -89,20 +93,48 @@ const serviceColumns: ColumnsType<ServiceOrder> = [
       width: 150,
       render: (text: any, record: ServiceOrder) => (
         <div className="flex gap-2">
-          <Button size="small" type="primary" className="bg-teal-500 hover:!bg-teal-600">Xem</Button>
+          {/* Nút Xem chi tiết */}
+          <Button 
+            size="small" 
+            type="primary" 
+            className="bg-teal-500 hover:!bg-teal-600"
+            onClick={() => props.openDetailsModal(record)}
+          >
+            Xem
+          </Button>
+          
           {record.status === 'pending' && (
-            <Button size="small" type="default" className="text-green-500 border-green-500">Xác nhận</Button>
+            // Nút Xác nhận (Mở Modal Xác nhận)
+            <Button 
+              size="small" 
+              type="default" 
+              className="text-green-500 border-green-500"
+              onClick={() => props.openConfirmServiceModal(record)} 
+            >
+              Xác nhận
+            </Button>
+          )}
+          {/* Thêm nút Hủy nếu muốn hủy trực tiếp */}
+          {record.status === 'pending' && (
+            <Button 
+              size="small" 
+              type="default" 
+              danger
+              onClick={() => props.openCancelServiceModal(record)} 
+            >
+              Hủy
+            </Button>
           )}
         </div>
       )
     }
 ];
 
-export default function OrderServiceTable({ data }: OrderServiceTableProps) {
+export default function OrderServiceTable(props: OrderServiceTableProps) {
     return (
         <Table<ServiceOrder>
-            columns={serviceColumns}
-            dataSource={data}
+            columns={serviceColumns(props)}
+            dataSource={props.data}
             pagination={{ pageSize: 5 }}
             scroll={{ x: 1200 }}
             className="orders-table"
