@@ -1,40 +1,79 @@
 "use client";
 
 import React, { useState } from "react";
+// Đảm bảo bạn đã cài đặt và cấu hình react-i18next
 import { useTranslation } from "react-i18next";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
-import { Input, Button, Checkbox, Modal } from "antd";
+// Sử dụng các component UI của Ant Design
+import { Input, Button, Checkbox, Modal, message } from "antd"; 
 import type { CheckboxProps } from "antd";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify"; // Đảm bảo bạn đã cài đặt react-toastify
+import { authService, decodeTokenPayload, getUserIdFromTokenPayload } from "@/services/authService"; 
+import { shopService } from "../services/shopService"; 
+// Thay thế bằng đường dẫn thực tế của type LoginPayload
+import { LoginPayload } from "@/app/register/store-register/types"; 
 
 type Inputs = {
-  email: string;
+  username: string; 
   password: string;
 };
 
-// --- MOCK DATA TÀI KHOẢN ---
-const mockAccounts = [
-  {
-    email: "customer@example.com",
-    password: "123456",
-    role: "customer",
-    redirectPath: "/",
-  },
-  {
-    email: "admin@example.com",
-    password: "123456",
-    role: "admin",
-    redirectPath: "/admin/dashboard",
-  },
-  {
-    email: "store@example.com",
-    password: "123456",
-    role: "store",
-    redirectPath: "/store",
-  },
-];
-// ----------------------------
+// --- HÀM CHUYỂN HƯỚNG DỰA TRÊN ROLE VÀ SHOP STATUS ---
+const handleRoleRedirect = async (token: string, router: any, t: (key: string) => string) => {
+  const tokenPayload = decodeTokenPayload(token);
+  const role = tokenPayload.role || []; // Đảm bảo luôn là mảng
+  console.log(role)
+  const userId = getUserIdFromTokenPayload(token);
+
+  if (role.includes("ROLE_ADMIN")) {
+    message.success(t("Đăng nhập thành công! Chuyển hướng đến Admin Dashboard."));
+    router.push("/admin/dashboard");
+    return;
+  } 
+  
+  if (role.includes("ROLE_SHOP")) {
+    // Nếu không có userId, không thể kiểm tra cửa hàng
+    if (!userId) {
+        message.error(t("Không thể xác định ID người dùng. Vui lòng đăng nhập lại."));
+        return;
+    }
+    
+    try {
+      // 1. Lấy danh sách cửa hàng
+      const shopResponse = await shopService.getShops();
+      // 2. Kiểm tra xem có cửa hàng nào thuộc sở hữu của userId hiện tại không
+      const hasShop = shopResponse.items.some((shop) => {
+        console.log(userId)
+        console.log(shop.ownerId)
+        return shop.ownerId === userId
+      });
+      console.log(hasShop)
+
+      if (hasShop) {
+        message.success(t("Đăng nhập thành công! Chuyển hướng đến trang cửa hàng."));
+        router.push("/store");
+      } else {
+        // Chuyển hướng đến trang tạo thông tin cửa hàng
+        message.warning(t("Vui lòng tạo thông tin cửa hàng để tiếp tục sử dụng dịch vụ."));
+        router.push("/store/onboarding");
+      }
+    } catch (apiError) {
+      console.error("Failed to check shop existence:", apiError);
+      // Giả định nếu lỗi API thì cũng nên chuyển hướng đến Onboarding để thử tạo
+      message.error(t("Lỗi khi kiểm tra thông tin cửa hàng. Chuyển hướng đến trang tạo cửa hàng."));
+      router.push("/store/onboarding");
+    }
+    return;
+  } 
+  
+  if (role.includes("ROLE_USER")) {
+    message.error(t("Tài khoản này không có quyền truy cập vào giao diện quản lý."));
+    return;
+  }
+  
+  message.error(t("Không xác định được quyền truy cập. Vui lòng liên hệ hỗ trợ."));
+};
+// --------------------------------------
 
 export default function Login() {
   const { t } = useTranslation();
@@ -49,32 +88,41 @@ export default function Login() {
     formState: { errors },
   } = useForm<Inputs>({
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
     mode: "onBlur",
   });
 
-  // --- LOGIC SUBMIT ĐÃ CẬP NHẬT ---
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  // --- LOGIC SUBMIT ĐÃ CẬP NHẬT ĐỂ GỌI API ---
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
     setLoading(true);
-    // Mô phỏng quá trình API call
-    setTimeout(() => {
-      const user = mockAccounts.find(
-        (account) =>
-          account.email === data.email && account.password === data.password
-      );
+    
+    try {
+      const payload: LoginPayload = {
+        username: data.username,
+        password: data.password,
+      };
+      
+      // 1. Gọi API Đăng nhập và nhận token
+      const token = await authService.login(payload);
+      
+      // 2. Lưu token
+      localStorage.setItem("authToken", token); 
 
-      if (user) {
-        toast.success(t(`Đăng nhập thành công!`));
-        router.push(user.redirectPath);
-      } else {
-        toast.error(t("Email hoặc mật khẩu không chính xác!"));
-      }
+      // 3. Chuyển hướng dựa trên Role và Shop Status
+      await handleRoleRedirect(token, router, t);
+
+    } catch (error: any) {
+      console.error("Login Error:", error.response?.data || error.message);
+      const errorMessage = error.response?.data?.message || t("Tài khoản hoặc mật khẩu không chính xác!");
+      message.error(errorMessage);
+
+    } finally {
       setLoading(false);
-    }, 1000); // Giả lập độ trễ 1 giây
+    }
   };
-  // ---------------------------------
+  // ---------------------------------------------
 
   const onChange: CheckboxProps["onChange"] = (e) => {
     console.log(`checked = ${e.target.checked}`);
@@ -82,7 +130,7 @@ export default function Login() {
 
   return (
     <div className="w-full grid grid-cols-2 h-screen relative">
-      {/* Forgot Password Modal */}
+      {/* Modal Quên mật khẩu */}
       <Modal
         title={<div className="text-center">{t("Quên mật khẩu")}</div>}
         open={isModalOpen}
@@ -99,7 +147,7 @@ export default function Login() {
           <Button
             className="!bg-[#2a9d8f] !text-white !w-full hover:!text-black transition-all duration-300"
             onClick={() => {
-              toast.success(t("Link đặt lại đã được gửi!"));
+              message.success(t("Link đặt lại đã được gửi!"));
               setIsModalOpen(false);
             }}
           >
@@ -114,28 +162,24 @@ export default function Login() {
           onSubmit={handleSubmit(onSubmit)}
           className="border flex flex-col justify-center items-center border-gray-300 rounded-lg p-6 w-96"
         >
-          {/* Email Controller */}
+          {/* Controller cho Tên đăng nhập */}
           <Controller
             control={control}
-            name="email"
+            name="username"
             rules={{
-              required: t("Email không được để trống"),
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
-                message: t("Email không hợp lệ"),
-              },
+              required: t("Tên đăng nhập không được để trống"),
             }}
             render={({ field }) => (
-              <Input {...field} placeholder={t("Email")} size="large" />
+              <Input {...field} placeholder={t("Tên đăng nhập (Username)")} size="large" />
             )}
           />
-          <div className="h-4 w-full">
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+           <div className="h-4 w-full">
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
             )}
-          </div>
+          </div> 
 
-          {/* Password Controller */}
+          {/* Controller cho Mật khẩu */}
           <Controller
             control={control}
             name="password"
@@ -160,7 +204,7 @@ export default function Login() {
             <Checkbox onChange={onChange}>{t("Ghi nhớ đăng nhập")}</Checkbox>
             <p
               className="underline cursor-pointer text-gray-500 hover:text-black transition-all duration-300"
-              onClick={() => setIsModalOpen(true)} // Mở modal thay vì chuyển trang
+              onClick={() => setIsModalOpen(true)}
             >
               {t("Quên mật khẩu?")}
             </p>
@@ -169,7 +213,7 @@ export default function Login() {
           <Button
             htmlType="submit"
             style={{
-              backgroundColor: "#2a9d8f", // Màu xanh mint
+              backgroundColor: "#2a9d8f", 
               border: "none",
               marginTop: "20px",
               marginBottom: "10px",
@@ -194,7 +238,6 @@ export default function Login() {
       </div>
 
       <div className="flex justify-center items-center bg-[#E7F3F5]">
-        {/* Màu nền #E7F3F5 là màu xanh nhạt pastel */}
         <img src="/images/banner.png" alt="banner" />
       </div>
     </div>

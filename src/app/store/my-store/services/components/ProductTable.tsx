@@ -1,4 +1,4 @@
-import { Table, Button, Avatar, Tooltip, Popconfirm } from "antd"; // Thêm Popconfirm
+import { Table, Button, Avatar, Tooltip, Popconfirm } from "antd"; 
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
@@ -10,8 +10,8 @@ import { JSX } from "react";
 
 interface ProductTableProps {
   data: ProductData[];
-  handleDelete: (key: string, type: "service" | "product") => void; // Prop mới
-  handleOpenFormModal: (item: ProductData | null) => void; // Prop mới
+  handleDelete: (key: string, type: "service" | "product") => void; 
+  handleOpenFormModal: (item: ProductData | null) => void; 
 }
 
 export default function ProductTable({
@@ -41,22 +41,7 @@ export default function ProductTable({
         <span className="font-semibold text-teal-600">{text}</span>
       ),
     },
-    {
-      title: "Giá",
-      dataIndex: "price",
-      key: "price",
-      render: (text: number) => (
-        <span className="font-semibold">{formatCurrency(text)}đ</span>
-      ),
-      width: 100,
-    },
-    {
-      title: "Giảm giá",
-      dataIndex: "discount",
-      key: "discount",
-      render: (text: number) => `${text}%`,
-      width: 80,
-    },
+    // Bỏ 'Giá', 'Giảm giá'
     {
       title: "Hình ảnh",
       dataIndex: "image",
@@ -124,7 +109,7 @@ export default function ProductTable({
       pagination={{ pageSize: 7, hideOnSinglePage: true }}
       bordered
       className="rounded-lg overflow-hidden"
-      scroll={{ x: 1000 }}
+      scroll={{ x: 800 }} // Điều chỉnh scroll x phù hợp với số cột
     />
   );
 }

@@ -3,42 +3,46 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm, SubmitHandler, Controller } from "react-hook-form";
-import { Input, Button, Checkbox, Modal } from "antd";
+import { useDispatch } from 'react-redux';
+import { setUserId, setShopId } from '@/redux/userSlice';
+import { Input, Button, Checkbox, Modal, message } from "antd";
 import type { CheckboxProps } from "antd";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify"; // Đảm bảo bạn đã cài đặt react-toastify
+import { authService, decodeTokenPayload } from "@/services/authService";
+import { shopService } from '@/services/shopService';
+import { LoginPayload } from "@/app/register/store-register/types";
 
 type Inputs = {
-  email: string;
+  username: string;
   password: string;
 };
 
-// --- MOCK DATA TÀI KHOẢN ---
-const mockAccounts = [
-  {
-    email: "customer@example.com",
-    password: "123456",
-    role: "customer",
-    redirectPath: "/",
-  },
-  {
-    email: "admin@example.com",
-    password: "123456",
-    role: "admin",
-    redirectPath: "/admin/dashboard",
-  },
-  {
-    email: "store@example.com",
-    password: "123456",
-    role: "store",
-    redirectPath: "/store",
-  },
-];
-// ----------------------------
+const handleRoleRedirect = async (roles: string[], router: any, t: (key: string) => string, userId: string, dispatch: any) => {
+  if (roles.includes("ROLE_ADMIN")) {
+    message.success(t("Đăng nhập thành công! Chuyển hướng đến Admin Dashboard."));
+    router.push("/admin/dashboard");
+  } else if (roles.includes("ROLE_SHOP")) {
+    const shopId = await shopService.checkIfUserOwnsShop(userId);
+    if (shopId) {
+      dispatch(setShopId(shopId));
+      message.success(t("Đăng nhập thành công! Chuyển hướng đến trang cửa hàng."));
+      router.push("/store");
+    } else {
+      dispatch(setShopId(null));
+      message.warning(t("Bạn chưa có cửa hàng nào. Vui lòng tạo cửa hàng mới."));
+      router.push("/store/onboarding");
+    }
+  } else if (roles.includes("ROLE_USER")) {
+    message.error(t("Tài khoản này không có quyền truy cập vào giao diện quản lý."));
+  } else {
+    message.error(t("Không xác định được quyền truy cập. Vui lòng liên hệ hỗ trợ."));
+  }
+};
 
 export default function Login() {
   const { t } = useTranslation();
   const router = useRouter();
+  const dispatch = useDispatch();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -49,40 +53,45 @@ export default function Login() {
     formState: { errors },
   } = useForm<Inputs>({
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
     mode: "onBlur",
   });
 
-  // --- LOGIC SUBMIT ĐÃ CẬP NHẬT ---
-  const onSubmit: SubmitHandler<Inputs> = (data) => {
+  const onSubmit: SubmitHandler<Inputs> = async (data) => {
     setLoading(true);
-    // Mô phỏng quá trình API call
-    setTimeout(() => {
-      const user = mockAccounts.find(
-        (account) =>
-          account.email === data.email && account.password === data.password
-      );
+    
+    try {
+      const payload: LoginPayload = {
+        username: data.username,
+        password: data.password,
+      };
+      
+      const token = await authService.login(payload);
 
-      if (user) {
-        toast.success(t(`Đăng nhập thành công!`));
-        router.push(user.redirectPath);
-      } else {
-        toast.error(t("Email hoặc mật khẩu không chính xác!"));
-      }
+      localStorage.setItem("authToken", token); 
+
+      const tokenPayload = decodeTokenPayload(token);
+
+      dispatch(setUserId(tokenPayload.userId));
+      
+      handleRoleRedirect(tokenPayload.role, router, t, tokenPayload.userId, dispatch);
+
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || t("Tài khoản hoặc mật khẩu không chính xác!");
+      message.error(errorMessage);
+
+    } finally {
       setLoading(false);
-    }, 1000); // Giả lập độ trễ 1 giây
+    }
   };
-  // ---------------------------------
 
   const onChange: CheckboxProps["onChange"] = (e) => {
-    console.log(`checked = ${e.target.checked}`);
   };
 
   return (
     <div className="w-full grid grid-cols-2 h-screen relative">
-      {/* Forgot Password Modal */}
       <Modal
         title={<div className="text-center">{t("Quên mật khẩu")}</div>}
         open={isModalOpen}
@@ -99,7 +108,7 @@ export default function Login() {
           <Button
             className="!bg-[#2a9d8f] !text-white !w-full hover:!text-black transition-all duration-300"
             onClick={() => {
-              toast.success(t("Link đặt lại đã được gửi!"));
+              message.success(t("Link đặt lại đã được gửi!"));
               setIsModalOpen(false);
             }}
           >
@@ -114,28 +123,22 @@ export default function Login() {
           onSubmit={handleSubmit(onSubmit)}
           className="border flex flex-col justify-center items-center border-gray-300 rounded-lg p-6 w-96"
         >
-          {/* Email Controller */}
           <Controller
             control={control}
-            name="email"
+            name="username"
             rules={{
-              required: t("Email không được để trống"),
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i,
-                message: t("Email không hợp lệ"),
-              },
+              required: t("Tên đăng nhập không được để trống"),
             }}
             render={({ field }) => (
-              <Input {...field} placeholder={t("Email")} size="large" />
+              <Input {...field} placeholder={t("Tên đăng nhập (Username)")} size="large" />
             )}
           />
           <div className="h-4 w-full">
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+            {errors.username && (
+              <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
             )}
           </div>
 
-          {/* Password Controller */}
           <Controller
             control={control}
             name="password"
@@ -160,7 +163,7 @@ export default function Login() {
             <Checkbox onChange={onChange}>{t("Ghi nhớ đăng nhập")}</Checkbox>
             <p
               className="underline cursor-pointer text-gray-500 hover:text-black transition-all duration-300"
-              onClick={() => setIsModalOpen(true)} // Mở modal thay vì chuyển trang
+              onClick={() => setIsModalOpen(true)}
             >
               {t("Quên mật khẩu?")}
             </p>
@@ -169,7 +172,7 @@ export default function Login() {
           <Button
             htmlType="submit"
             style={{
-              backgroundColor: "#2a9d8f", // Màu xanh mint
+              backgroundColor: "#2a9d8f", 
               border: "none",
               marginTop: "20px",
               marginBottom: "10px",
@@ -194,7 +197,6 @@ export default function Login() {
       </div>
 
       <div className="flex justify-center items-center bg-[#E7F3F5]">
-        {/* Màu nền #E7F3F5 là màu xanh nhạt pastel */}
         <img src="/images/banner.png" alt="banner" />
       </div>
     </div>

@@ -1,11 +1,16 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { InternalAxiosRequestConfig, CreateAxiosDefaults } from 'axios'
 
-const apiInstance: AxiosInstance = axios.create({
-    baseURL: process.env.REACT_APP_API_BASE_URL || 'https://api.example.com',
-    timeout: 10000,
-    headers: {
-        'Content-Type': 'application/json',
+export const apiInstance = {
+    create: (configDefault?: CreateAxiosDefaults) => {
+        const api = axios.create(configDefault)
+        api.interceptors.request.use((config) => {
+            return {
+                ...config,
+                headers: {
+                    Authorization: "Bearer "// Sử dụng userParse ở đây
+                },
+            } as unknown as InternalAxiosRequestConfig
+        })
+        return api
     },
-});
-
-export default apiInstance;
+}

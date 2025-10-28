@@ -6,15 +6,12 @@ import {
 } from "@ant-design/icons";
 
 export default function DashboardPage() {
-  // Mock data được đặt tên lại cho rõ ràng, giá trị giữ nguyên
   const mockData = {
-    // Row 1: Thống kê cuộc hẹn/đơn hàng
     todayAppointments: 45, 
     pendingConfirmation: 12, 
     inProgress: 8, 
     completedCount: 156, 
 
-    // Row 2 & 3: Thống kê tài chính
     monthlyRevenue: 45650000, 
     commissionRevenue: 6847500, 
     dailyRevenue: 2450000, 
@@ -30,26 +27,6 @@ export default function DashboardPage() {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       
-      <div className="bg-[#E0FAF7] py-6 border-b-4 border-teal-500 mb-6 rounded-lg shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
-          <Avatar
-            size={64}
-            src="https://i.pravatar.cc/150?img=9"
-            className="shadow-md border-2 border-white bg-white"
-          />
-          <div className="ml-4">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Chào mừng quay trở lại
-            </h1>
-            <h2 className="text-3xl font-extrabold text-teal-700">
-              Cửa hàng chăm sóc sức khỏe thú cưng Pettiny
-            </h2>
-          </div>
-        </div>
-      </div>
-      {/* ------------------------------------------------------------------- */}
-
-      {/* Stats Cards Row 1: Tổng quan Cuộc hẹn/Đơn hàng */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} lg={6}>
           <Card className="h-full rounded-xl shadow-sm border-l-4 border-blue-500">
@@ -85,7 +62,6 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      {/* Stats Cards Row 2: Doanh thu & Tăng trưởng */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} lg={8}>
           <Card className="h-full rounded-xl shadow-sm">
@@ -122,7 +98,6 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      {/* Stats Cards Row 3: Chi tiết Tài chính & Giao dịch */}
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} lg={8}>
           <Card className="h-full rounded-xl shadow-sm">
@@ -156,13 +131,11 @@ export default function DashboardPage() {
         </Col>
       </Row>
 
-      {/* Bottom Section: Biểu đồ và Chi tiết */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
           <Card title="Biểu đồ thống kê đơn hàng" className="h-full rounded-xl shadow-sm">
             <div className="text-sm text-gray-500 mb-4">Thống kê số lượng đơn hàng qua tháng</div>
             
-            {/* Progress bars */}
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-1">
@@ -187,7 +160,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Chart placeholder */}
             <div className="mt-6 h-32 bg-gray-100 rounded flex items-center justify-center">
               <div className="text-gray-400">Biểu đồ đường thống kê (Placeholder)</div>
             </div>

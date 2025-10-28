@@ -1,165 +1,422 @@
-// src/app/store/my-store/services/hooks/useStoreData.tsx
+"use client";
+import { useState, useMemo, useEffect } from "react";
+import { Tag, message } from "antd";
+import type { JSX } from "react";
 
-import { useState, useMemo, JSX } from 'react';
-import { Tag, message } from 'antd'; // Thêm message để hiển thị thông báo
+// === IMPORT SERVICE ===
+import { shopService } from "@/services/shopService";
+import { categoryService } from "@/services/categoryService";
+import { serviceService } from "@/services/serviceService";
+import { productService } from "@/services/productService";
+import { serviceDetailService } from "@/services/serviceDetailService";
+import { productCategoryService } from "@/services/productCategoryService"; // ✅ Import productCategoryService
+import { getUserIdFromTokenPayload } from "@/services/authService";
 
-// --- TYPES (GIỮ NGUYÊN) ---
-// ... (ServiceData, ProductData, StoreTabType, StoreStatusType)
+// === INTERFACES ===
+export interface CategoryData {
+  key: string;
+  name: string;
+  description: string;
+  status: "Hoạt động" | "Ngưng hoạt động";
+}
+
+export interface ProductCategoryData {
+  key: string;
+  name: string;
+  shopId: string;
+  status: "Hoạt động" | "Ngưng hoạt động";
+}
+
 export interface ServiceData {
   key: string;
   name: string;
-  duration: string;
-  price: number;
-  discount: number;
   image: string;
   description: string;
-  status: 'Hoạt động' | 'Ngưng hoạt động';
+  status: "Hoạt động" | "Ngưng hoạt động";
+  serviceCategoryId: string;
 }
 
 export interface ProductData {
   key: string;
   name: string;
   stock: number;
-  price: number;
-  discount: number;
   image: string;
   description: string;
-  status: 'Hoạt động' | 'Ngưng hoạt động';
+  status: "Hoạt động" | "Ngưng hoạt động";
+  productCategoryId: string;
 }
 
-export type StoreTabType = 'Dịch Vụ' | 'Sản Phẩm';
-export type StoreStatusType = 'all' | 'Hoạt động' | 'Ngưng hoạt động';
-export type ItemType = 'service' | 'product';
+export interface ServiceDetailData {
+  key: string;
+  name: string;
+  serviceId: string;
+  price: number;
+  duration: string;
+  status: "Hoạt động" | "Ngưng hoạt động";
+}
 
-// --- MOCK DATA (Sử dụng state để có thể thay đổi) ---
-const initialServiceData: ServiceData[] = [
-  // ... (Dữ liệu mẫu Dịch vụ giữ nguyên)
-  { key: '1', name: 'Dịch vụ tắm cho chó', duration: '60 phút', price: 200000, discount: 10, image: 'https://i.pravatar.cc/150?img=1', description: 'Chúng tôi mang đến cho thú cưng của bạn trải nghiệm tắm rửa thư giãn, an toàn và chuyên nghiệp...', status: 'Hoạt động' },
-  { key: '2', name: 'Dịch vụ chải lông cho chó', duration: '60 phút', price: 200000, discount: 10, image: 'https://i.pravatar.cc/150?img=2', description: 'Tuyệt chiêu giúp chó mèo luôn mượt mà và giảm tối đa lông rụng trong nhà...', status: 'Ngưng hoạt động' },
-  { key: '3', name: 'Dịch vụ cho chó ăn', duration: '60 phút', price: 200000, discount: 10, image: 'https://i.pravatar.cc/150?img=3', description: 'Chúng tôi mang đến cho thú cưng của bạn trải nghiệm tắm rửa thư giãn, an toàn và chuyên nghiệp...', status: 'Hoạt động' },
-  { key: '4', name: 'Dịch vụ chăm sóc', duration: '60 phút', price: 200000, discount: 10, image: 'https://i.pravatar.cc/150?img=4', description: 'Chúng tôi mang đến cho thú cưng của bạn trải nghiệm tắm rửa thư giãn, an toàn và chuyên nghiệp...', status: 'Ngưng hoạt động' },
-  { key: '5', name: 'Dịch vụ giữ chó', duration: '60 phút', price: 200000, discount: 10, image: 'https://i.pravatar.cc/150?img=5', description: 'Chúng tôi mang đến cho thú cưng của bạn trải nghiệm tắm rửa thư giãn, an toàn và chuyên nghiệp...', status: 'Hoạt động' },
-  { key: '6', name: 'Dịch vụ chích ngừa', duration: '60 phút', price: 200000, discount: 10, image: 'https://i.pravatar.cc/150?img=6', description: 'Chúng tôi mang đến cho thú cưng của bạn trải nghiệm tắm rửa thư giãn, an toàn và chuyên nghiệp...', status: 'Hoạt động' },
-  { key: '7', name: 'Dịch vụ huấn luyện cho chó', duration: '60 phút', price: 200000, discount: 10, image: 'https://i.pravatar.cc/150?img=7', description: 'Chúng tôi mang đến cho thú cưng của bạn trải nghiệm tắm rửa thư giãn, an toàn và chuyên nghiệp...', status: 'Ngưng hoạt động' },
-];
+export type StoreTabType =
+  | "Dịch Vụ"
+  | "Sản Phẩm"
+  | "Category"
+  | "Chi Tiết Dịch Vụ"
+  | "Category Sản Phẩm"
+  | "Chi Tiết Sản Phẩm"; // ✅ Thêm hai tab mới
+export type StoreStatusType = "all" | "Hoạt động" | "Ngưng hoạt động";
+export type ItemType = "service" | "product" | "category" | "service-detail" | "product-category"; // ✅ Thêm product-category
+export type StoreItemData =
+  | ServiceData
+  | ProductData
+  | CategoryData
+  | ServiceDetailData
+  | ProductCategoryData; // ✅ Thêm ProductCategoryData
 
-const initialProductData: ProductData[] = [
-  // ... (Dữ liệu mẫu Sản phẩm giữ nguyên)
-  { key: '1', name: 'Thức ăn cho mèo', stock: 12, price: 200000, discount: 10, image: 'https://picsum.photos/seed/catfood1/50/50', description: 'Thức ăn Cho Mèo – Dinh Dưỡng Dày Đủ, Mèo Khoẻ Mạnh Mỗi Ngày! Đặc biệt dành riêng cho hệ tiêu hoá và khẩu vị của mèo.', status: 'Hoạt động' },
-  { key: '2', name: 'Thức ăn cho chó', stock: 12, price: 200000, discount: 10, image: 'https://picsum.photos/seed/dogfood1/50/50', description: 'Thức ăn Cho Chó – Dinh Dưỡng Dày Đủ, Chó Khoẻ Mạnh Mỗi Ngày! Công thức đặc biệt dành cho giống chó nhỏ.', status: 'Ngưng hoạt động' },
-  { key: '3', name: 'Thức ăn cho mèo', stock: 12, price: 200000, discount: 10, image: 'https://picsum.photos/seed/catfood2/50/50', description: 'Thức ăn Cho Mèo – Dinh Dưỡng Dày Đủ, Mèo Khoẻ Mạnh Mỗi Ngày! Đặc biệt dành riêng cho hệ tiêu hoá và khẩu vị của mèo.', status: 'Hoạt động' },
-  { key: '4', name: 'Thức ăn cho chó', stock: 12, price: 200000, discount: 10, image: 'https://picsum.photos/seed/dogfood2/50/50', description: 'Thức ăn Cho Chó – Dinh Dưỡng Dày Đủ, Chó Khoẻ Mạnh Mỗi Ngày! Công thức đặc biệt dành cho giống chó nhỏ.', status: 'Ngưng hoạt động' },
-  { key: '5', name: 'Thức ăn cho mèo', stock: 12, price: 200000, discount: 10, image: 'https://picsum.photos/seed/catfood3/50/50', description: 'Thức ăn Cho Mèo – Dinh Dưỡng Dày Đủ, Mèo Khoẻ Mạnh Mỗi Ngày! Đặc biệt dành riêng cho hệ tiêu hoá và khẩu vị của mèo.', status: 'Hoạt động' },
-  { key: '6', name: 'Thức ăn cho chó', stock: 12, price: 200000, discount: 10, image: 'https://picsum.photos/seed/dogfood3/50/50', description: 'Thức ăn Cho Chó – Dinh Dưỡng Dày Đủ, Chó Khoẻ Mạnh Mỗi Ngày! Công thức đặc biệt dành cho giống chó nhỏ.', status: 'Hoạt động' },
-  { key: '7', name: 'Thức ăn cho mèo', stock: 12, price: 200000, discount: 10, image: 'https://picsum.photos/seed/catfood4/50/50', description: 'Thức ăn Cho Mèo – Dinh Dưỡng Dày Đủ, Mèo Khoẻ Mạnh Mỗi Ngày! Đặc biệt dành riêng cho hệ tiêu hoá và khẩu vị của mèo.', status: 'Hoạt động' },
-];
+// === HELPER ===
+export const formatCurrency = (amount: number) =>
+  new Intl.NumberFormat("vi-VN").format(amount);
 
-// --- HELPER FUNCTIONS (GIỮ NGUYÊN) ---
-export const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('vi-VN').format(amount);
-};
-const getStatusHexColor = (status: 'Hoạt động' | 'Ngưng hoạt động'): string => {
-  if (status === 'Hoạt động') return '#10B981';
-  return '#DC2626';
-};
-export const renderStatusTag = (status: 'Hoạt động' | 'Ngưng hoạt động'): JSX.Element => {
-  return (
-    <Tag 
-      color={getStatusHexColor(status)} 
-      className="font-semibold rounded-full py-1 px-3 border-0 text-white"
-    >
-      {status}
-    </Tag>
-  );
-};
+const getStatusHexColor = (
+  status: "Hoạt động" | "Ngưng hoạt động"
+): string => (status === "Hoạt động" ? "#10B981" : "#DC2626");
 
-// --- HOOK CHÍNH ---
+export const renderStatusTag = (
+  status: "Hoạt động" | "Ngưng hoạt động"
+): JSX.Element => (
+  <Tag
+    color={getStatusHexColor(status)}
+    className="font-semibold rounded-full py-1 px-3 border-0 text-white"
+  >
+    {status}
+  </Tag>
+);
+
+// === MAIN HOOK ===
 export function useStoreData() {
-  const [serviceData, setServiceData] = useState<ServiceData[]>(initialServiceData);
-  const [productData, setProductData] = useState<ProductData[]>(initialProductData);
-  
-  const [activeTab, setActiveTab] = useState<StoreTabType>('Dịch Vụ');
-  const [activeStatusFilter, setActiveStatusFilter] = useState<StoreStatusType>('all');
-  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
-  
-  // State quản lý Modal Thêm/Sửa
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<ServiceData | ProductData | null>(null);
+  // === STATE DATA ===
+  const [serviceData, setServiceData] = useState<ServiceData[]>([]);
+  const [productData, setProductData] = useState<ProductData[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [productCategoryData, setProductCategoryData] = useState<ProductCategoryData[]>([]); // ✅ Thêm state mới
+  const [serviceDetailData, setServiceDetailData] = useState<ServiceDetailData[]>([]);
 
-  // LOGIC XOÁ
-  const handleDelete = (key: string, type: ItemType) => {
-    if (type === 'service') {
-      setServiceData(prev => prev.filter(item => item.key !== key));
-      message.success(`Đã xoá dịch vụ có mã ${key}`);
-    } else {
-      setProductData(prev => prev.filter(item => item.key !== key));
-      message.success(`Đã xoá sản phẩm có mã ${key}`);
+  // === STATE STATUS ===
+  const [shopId, setShopId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // === STATE UI ===
+  const [activeTab, setActiveTab] = useState<StoreTabType>("Dịch Vụ");
+  const [activeStatusFilter, setActiveStatusFilter] = useState<StoreStatusType>("all");
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<StoreItemData | null>(null);
+
+  // === FETCH DATA ===
+  const fetchData = async () => {
+    setIsLoading(true);
+    setError(null);
+    let currentShopId: string | null = shopId;
+
+    try {
+      if (!currentShopId) {
+        const token = localStorage.getItem("authToken") || "";
+        if (!token) throw new Error("Không tìm thấy token đăng nhập.");
+
+        const userId = getUserIdFromTokenPayload(token);
+        if (!userId) throw new Error("Không thể xác định User ID.");
+
+        const shopResponse = await shopService.getShops();
+        const ownedShop = shopResponse.items?.find(
+          (shop: any) => shop.ownerId === userId
+        );
+
+        if (ownedShop) {
+          currentShopId = ownedShop.id;
+          setShopId(currentShopId);
+        } else {
+          message.warning("Người dùng hiện tại không sở hữu cửa hàng nào.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      if (!currentShopId) return;
+
+      // === FETCH PARALLEL ===
+      const categoriesResponse = await categoryService.getServiceCategory(currentShopId);
+      const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId); // ✅ Fetch Product Categories
+      const servicesResponse = await serviceService.getAllServices(currentShopId);
+      const productsResponse = await productService.getProducts(currentShopId);
+      const serviceDetailsResponse = await serviceDetailService.getServiceDetails(currentShopId);
+
+      // === UPDATE STATE SAFELY ===
+      setCategoryData(
+        (categoriesResponse?.items || []).map((item: any) => ({
+          ...item,
+          key: String(item.id || item.key),
+        }))
+      );
+
+      setProductCategoryData(
+        (productCategoriesResponse?.items || []).map((item: any) => ({
+          ...item,
+          key: String(item.id || item.key),
+        }))
+      ); // ✅ Update Product Categories State
+
+      setServiceData(
+        (servicesResponse?.items || []).map((item: any) => ({
+          ...item,
+          key: String(item.id || item.key),
+          serviceCategoryId: String(item.serviceCategoryId || item.key),
+        }))
+      );
+
+      setProductData(
+        (productsResponse?.items || []).map((item: any) => ({
+          ...item,
+          key: String(item.id || item.key),
+          productCategoryId: String(item.productCategoryId || item.key),
+        }))
+      );
+
+      setServiceDetailData(
+        (serviceDetailsResponse?.items || []).map((item: any) => ({
+          ...item,
+          key: String(item.id || item.key),
+        }))
+      );
+    } catch (err: any) {
+      console.error("Lỗi API khi lấy dữ liệu:", err);
+      setError(
+        `Không thể tải dữ liệu từ server. Chi tiết: ${
+          err.message || "Lỗi không xác định"
+        }`
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // LOGIC SỬA/THÊM - mở modal
-  const handleOpenFormModal = (item: ServiceData | ProductData | null) => {
-    setEditingItem(item); // Đặt item đang sửa (null nếu là thêm mới)
+  useEffect(() => {
+    fetchData();
+  }, [shopId]);
+
+  // === HÀM MỞ FORM MODAL ===
+  const handleOpenFormModal = (item: StoreItemData | null) => {
+    setEditingItem(item);
     setIsFormModalOpen(true);
   };
 
-  // LOGIC LƯU (Sửa/Thêm)
-  const handleSave = (values: any, type: ItemType) => {
-    const newItemKey = String(Math.max(...(type === 'service' ? serviceData : productData).map(item => Number(item.key))) + 1);
-    
-    if (type === 'service') {
-        const itemToSave: ServiceData = { ...values, key: editingItem?.key || newItemKey, price: Number(values.price), discount: Number(values.discount) };
-        if (editingItem) {
-            setServiceData(prev => prev.map(item => (item.key === editingItem.key ? itemToSave : item)));
-            message.success(`Đã cập nhật dịch vụ "${itemToSave.name}"`);
-        } else {
-            setServiceData(prev => [{ ...itemToSave, key: newItemKey }, ...prev]);
-            message.success(`Đã thêm dịch vụ mới: "${itemToSave.name}"`);
-        }
-    } else {
-        const itemToSave: ProductData = { ...values, key: editingItem?.key || newItemKey, stock: Number(values.stock), price: Number(values.price), discount: Number(values.discount) };
-        if (editingItem) {
-            setProductData(prev => prev.map(item => (item.key === editingItem.key ? itemToSave : item)));
-            message.success(`Đã cập nhật sản phẩm "${itemToSave.name}"`);
-        } else {
-            setProductData(prev => [{ ...itemToSave, key: newItemKey }, ...prev]);
-            message.success(`Đã thêm sản phẩm mới: "${itemToSave.name}"`);
-        }
+  // === HÀM LƯU DỮ LIỆU (SERVICE/PRODUCT) ===
+const handleSave = async (values: any, type: ItemType) => {
+  try {
+    if (!shopId) {
+      message.error("Không tìm thấy Shop ID.");
+      return;
     }
 
-    setIsFormModalOpen(false);
-    setEditingItem(null);
+    // === CATEGORY ===
+    if (type === "category") {
+      const payload = {
+        name: values.name,
+        shopId,
+      };
+
+      if (editingItem) {
+        await categoryService.updateServiceCategory(editingItem.key, payload);
+        message.success("Cập nhật Category thành công!");
+      } else {
+        await categoryService.createServiceCategory(payload);
+        message.success("Thêm Category thành công!");
+      }
+
+      setIsFormModalOpen(false);
+      setEditingItem(null);
+      fetchData();
+      return;
+    }
+
+    // === PRODUCT CATEGORY ===
+    if (type === "product-category") {
+      const payload = {
+        name: values.name,
+        shopId,
+      };
+
+      if (editingItem) {
+        await productCategoryService.updateProductCategory(editingItem.key, payload); // ✅ Gọi updateProductCategory
+        message.success("Cập nhật Danh mục Sản phẩm thành công!");
+      } else {
+        await productCategoryService.createProductCategory(payload); // ✅ Gọi createProductCategory
+        message.success("Thêm Danh mục Sản phẩm thành công!");
+      }
+
+      setIsFormModalOpen(false);
+      setEditingItem(null);
+      fetchData();
+      return;
+    }
+
+    // === SERVICE ===
+    if (type === "service") {
+      const payload = {
+        name: values.name,
+        description: values.description || "",
+        serviceCategoryId: values.serviceCategoryId,
+        shopId,
+        status: values.status === "Hoạt động",
+        imageFile: values.image?.[0]?.originFileObj || null,
+      };
+
+      if (editingItem) {
+        // await serviceService.updateService(editingItem.key, payload);
+        message.success("Cập nhật dịch vụ thành công!");
+      } else {
+        await serviceService.createService(payload);
+        message.success("Thêm dịch vụ thành công!");
+      }
+
+      setIsFormModalOpen(false);
+      setEditingItem(null);
+      fetchData();
+      return;
+    }
+
+    // === PRODUCT ===
+    if (type === "product") {
+      const payload = {
+        name: values.name,
+        stock: values.stock,
+        price: values.price, // Thêm price
+        discount: values.discount, // Thêm discount
+        description: values.description || "",
+        shopId,
+        status: values.status === "Hoạt động",
+        productCategoryId: values.productCategoryId,
+        imageFile: values.image?.[0]?.originFileObj || null, // Thêm imageFile
+      };
+
+      if (editingItem) {
+        await productService.updateProduct(editingItem.key, payload); // ✅ Gọi updateProduct
+        message.success("Cập nhật sản phẩm thành công!");
+      } else {
+        await productService.createProduct(payload); // ✅ Gọi createProduct
+        message.success("Thêm sản phẩm thành công!");
+      }
+
+      setIsFormModalOpen(false);
+      setEditingItem(null);
+      fetchData();
+      return;
+    }
+  } catch (err: any) {
+    console.error("Lỗi khi lưu:", err);
+    message.error(err?.message || "Lưu thất bại, vui lòng thử lại!");
+  }
+};
+
+
+  // === HÀM XÓA ITEM ===
+  const handleDelete = async (key: string, type: ItemType) => {
+    try {
+      if (type === "service") {
+        await serviceService.deleteService(key);
+        message.success("Đã xóa dịch vụ!");
+        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+      } else if (type === "product") {
+        await productService.deleteProduct(key); // ✅ Gọi deleteProduct
+        message.success("Đã xóa sản phẩm!");
+        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+      } else if (type === "category") {
+        await categoryService.deleteServiceCategory(key); // ✅ Gọi deleteServiceCategory
+        message.success("Đã xóa danh mục!");
+        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+      } else if (type === "product-category") {
+        await productCategoryService.deleteProductCategory(key); // ✅ Gọi deleteProductCategory
+        message.success("Đã xóa danh mục sản phẩm!");
+        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+      } else if (type === "service-detail") {
+        // TODO: Implement deleteServiceDetail
+        message.warning("Chức năng xóa chi tiết dịch vụ chưa được triển khai!");
+      }
+    } catch (err: any) {
+      console.error("Lỗi xóa:", err);
+      message.error("Xóa thất bại!");
+    }
   };
 
+  // === DỮ LIỆU SAU LỌC ===
+  const filteredServiceData = useMemo(
+    () =>
+      activeStatusFilter === "all"
+        ? serviceData
+        : serviceData.filter((i) => i.status === activeStatusFilter),
+    [serviceData, activeStatusFilter]
+  );
 
-  // Logic lọc dữ liệu hiển thị trên bảng
-  const filteredServiceData = useMemo(() => {
-    if (activeStatusFilter === 'all') return serviceData;
-    return serviceData.filter(item => item.status === activeStatusFilter);
-  }, [activeStatusFilter, serviceData]);
+  const filteredProductData = useMemo(
+    () =>
+      activeStatusFilter === "all"
+        ? productData
+        : productData.filter((i) => i.status === activeStatusFilter),
+    [productData, activeStatusFilter]
+  );
 
-  const filteredProductData = useMemo(() => {
-    if (activeStatusFilter === 'all') return productData;
-    return productData.filter(item => item.status === activeStatusFilter);
-  }, [activeStatusFilter, productData]);
+  const filteredCategoryData = useMemo(
+    () =>
+      activeStatusFilter === "all"
+        ? categoryData
+        : categoryData.filter((i) => i.status === activeStatusFilter),
+    [categoryData, activeStatusFilter]
+  );
 
+  const filteredProductCategoryData = useMemo(
+    () =>
+      activeStatusFilter === "all"
+        ? productCategoryData
+        : productCategoryData.filter((i) => i.status === activeStatusFilter),
+    [productCategoryData, activeStatusFilter]
+  ); // ✅ Thêm filteredProductCategoryData
 
-  return {
-    activeTab,
-    setActiveTab,
-    activeStatusFilter,
-    setActiveStatusFilter,
-    isAdvancedSearchOpen,
-    setIsAdvancedSearchOpen,
-    filteredServiceData,
-    filteredProductData,
-    
-    // Thêm các hàm CRUD và state Modal
-    handleDelete,
-    handleOpenFormModal,
-    handleSave,
-    isFormModalOpen,
-    setIsFormModalOpen,
-    editingItem,
-  };
+  const filteredServiceDetailData = useMemo(
+    () =>
+      activeStatusFilter === "all"
+        ? serviceDetailData
+        : serviceDetailData.filter((i) => i.status === activeStatusFilter),
+    [serviceDetailData, activeStatusFilter]
+  );
+
+  // === RETURN ===
+  // === RETURN ===
+return {
+  activeTab,
+  setActiveTab,
+  activeStatusFilter,
+  setActiveStatusFilter,
+  isAdvancedSearchOpen,
+  setIsAdvancedSearchOpen,
+  isFormModalOpen,
+  setIsFormModalOpen,
+  editingItem,
+  setEditingItem,
+  handleSave,
+  handleDelete,
+  handleOpenFormModal,
+  fetchData,
+  categoryData,
+  serviceData,
+  productData,
+  serviceDetailData,
+  productCategoryData, // ✅ Thêm productCategoryData vào return
+  filteredServiceData,
+  filteredProductData,
+  filteredCategoryData,
+  filteredServiceDetailData,
+  filteredProductCategoryData, // ✅ Thêm filteredProductCategoryData vào return
+  isLoading,
+  error,
+  shopId, // ✅ Thêm dòng này
+};
+
 }

@@ -2,8 +2,10 @@
 
 import { useState, JSX } from 'react';
 import { Card, Tabs, TabsProps } from 'antd';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { shopService, Shop } from '@/services/shopService';
 
-// Import components cho từng Tab
 import StoreHeader from './components/StoreHeader';
 import StoreInfoTab from './components/StoreInfoTab';
 import StoreInfoBranchTab from './components/StoreInfoBranchTab';
@@ -38,9 +40,6 @@ export default function StoreInfoPage(): JSX.Element {
 
     return (
         <div className="p-6 bg-gray-50 min-h-screen">
-            {/* Header đồng bộ với các trang khác */}
-            <StoreHeader /> 
-
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 
                 <Card bordered={false} className="shadow-lg rounded-xl">

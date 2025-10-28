@@ -15,7 +15,7 @@ export default function StoreHeader(): JSX.Element {
                         Chào mừng quay trở lại
                     </h1>
                     <h2 className="text-3xl font-extrabold text-teal-700">
-                        Cửa hàng chăm sóc sức khỏe thú cưng Pettiny
+                        Cửa hàng chăm sóc sức khỏe thú cưng PetCare Mới
                     </h2>
                 </div>
             </div>
