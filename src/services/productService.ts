@@ -1,6 +1,8 @@
 // src/services/productService.ts
 
-interface ApiResponse<T> { items: T[]; totalItems: number; }
+import { apiInstance } from '@/constants/api';
+
+const productApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
 
 export interface ProductApiData {
     id: string;
@@ -38,7 +40,7 @@ interface UpdateProductRequest {
     imageFile?: File | null;
 }
 
-const BASE_PRODUCT_API_URL = "https://product.devnest.io.vn/api/product"; // Giả định URL API
+const BASE_PRODUCT_API_URL = "/product/api/product"; // Giả định URL API
 
 export const productService = {
     /**
@@ -47,27 +49,15 @@ export const productService = {
      */
     getProducts: async (shopId: string): Promise<ApiResponse<ProductApiData>> => {
         const pageIndex = 1;
-        const pageSize = 100; // Lấy đủ lớn để có tất cả
+        const pageSize = 100;
         const sortDirection = "asc";
-        const url = `${BASE_PRODUCT_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&shopId=${shopId}`;
 
         try {
-            const token = localStorage.getItem("authToken");
-            const headers: HeadersInit = { Accept: "*/*" };
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
+            const response = await productApi.get(BASE_PRODUCT_API_URL, {
+                params: { pageIndex, pageSize, sortDirection, shopId }
+            });
 
-            const response = await fetch(url, { method: "GET", headers });
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-            }
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(`Lỗi API: ${result.message}`);
-            }
-            return result.data as ApiResponse<ProductApiData>;
+            return response.data.data;
         } catch (error) {
             throw error;
         }
@@ -77,7 +67,6 @@ export const productService = {
      * Tạo mới Sản phẩm (POST)
      */
     createProduct: async (data: CreateProductRequest): Promise<ProductApiData> => {
-        const url = BASE_PRODUCT_API_URL;
         const formData = new FormData();
 
         formData.append("Name", data.name);
@@ -94,27 +83,11 @@ export const productService = {
         }
 
         try {
-            const token = localStorage.getItem("authToken");
-            const headers: HeadersInit = { Accept: "*/*" };
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
-
-            const response = await fetch(url, {
-                method: "POST",
-                headers,
-                body: formData,
+            const response = await productApi.post(BASE_PRODUCT_API_URL, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-            }
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(`Lỗi API: ${result.message}`);
-            }
-            return result.data as ProductApiData;
+            return response.data.data;
         } catch (error) {
             throw error;
         }
@@ -124,7 +97,6 @@ export const productService = {
      * Cập nhật Sản phẩm (PUT)
      */
     updateProduct: async (productId: string, data: UpdateProductRequest): Promise<ProductApiData> => {
-        const url = `${BASE_PRODUCT_API_URL}/${productId}`;
         const formData = new FormData();
 
         if (data.name !== undefined) formData.append("Name", data.name);
@@ -137,27 +109,11 @@ export const productService = {
         if (data.imageFile) formData.append("ImageFile", data.imageFile);
 
         try {
-            const token = localStorage.getItem("authToken");
-            const headers: HeadersInit = { Accept: "*/*" };
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
-
-            const response = await fetch(url, {
-                method: "PUT",
-                headers,
-                body: formData,
+            const response = await productApi.put(`${BASE_PRODUCT_API_URL}/${productId}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-            }
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(`Lỗi API: ${result.message}`);
-            }
-            return result.data as ProductApiData;
+            return response.data.data;
         } catch (error) {
             throw error;
         }
@@ -167,28 +123,10 @@ export const productService = {
      * Xóa một Sản phẩm (DELETE)
      */
     deleteProduct: async (productId: string): Promise<void> => {
-        const url = `${BASE_PRODUCT_API_URL}/${productId}`;
-
         try {
-            const token = localStorage.getItem("authToken");
-            const headers: HeadersInit = { Accept: "*/*" };
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
+            const response = await productApi.delete(`${BASE_PRODUCT_API_URL}/${productId}`);
 
-            const response = await fetch(url, {
-                method: "DELETE",
-                headers,
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-            }
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(`Lỗi API: ${result.message}`);
-            }
+            // No return data for delete
         } catch (error) {
             throw error;
         }

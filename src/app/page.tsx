@@ -106,6 +106,7 @@ export default function Login() {
       
       // 1. Gọi API Đăng nhập và nhận token
       const token = await authService.login(payload);
+      console.log("Login Successful, Token:", token);
       
       // 2. Lưu token
       localStorage.setItem("authToken", token); 

@@ -21,6 +21,7 @@ const ConfirmationModal: React.FC<OrderActionModalsProps> = ({
     const isConfirm = modalType === 'confirm_service';
     const staffName = mockStaff.find(s => s.id === (currentOrder as ServiceOrder).staffId)?.name;
 
+  
     return (
         <Modal
             title={isConfirm ? "Xác nhận Lịch hẹn" : "Hủy Đơn"}
@@ -89,7 +90,8 @@ const DetailsModal: React.FC<OrderActionModalsProps> = ({
 }) => {
     if (!currentOrder || modalType !== 'details') return null;
 
-    const isService = currentOrder.key.startsWith('SV');
+    const isService = 'services' in currentOrder;
+    console.log('Order key:', currentOrder.key, 'isService:', isService, 'has services:', 'services' in currentOrder);
     // Ép kiểu cho dễ dàng truy cập thuộc tính
     const order = currentOrder as ServiceOrder & ProductOrder; 
     const statusConfig = getStatusConfig(order.status);

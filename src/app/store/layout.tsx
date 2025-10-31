@@ -1,10 +1,10 @@
 "use client";
 
-import { Layout, Spin } from 'antd';
+import { Layout } from 'antd';
 import Sidebar from './components/Sidebar'; 
 import { JSX, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { LoadingProvider, useLoading } from './components/LoadingContext'; 
+import { LoadingProvider } from './components/LoadingContext'; 
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
 import { shopService, Shop } from '@/services/shopService';
@@ -13,7 +13,6 @@ import StoreHeader from '@/app/store/info/components/StoreHeader';
 const { Content } = Layout;
 
 const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { isLoading, setLoading } = useLoading();
     const pathname = usePathname();
     const shopId = useSelector((state: RootState) => state.user.shopId);
     const [shopInfo, setShopInfo] = useState<Shop | null>(null);
@@ -29,17 +28,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             }
         };
         fetchShopInfo();
-    }, [shopId]);
-
-    useEffect(() => {
-        if (isLoading) {
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 100); 
-
-            return () => clearTimeout(timer);
-        }
-    }, [pathname]); 
+    }, [shopId]); 
 
     return (
         <Layout style={{ minHeight: '100vh' }}>
@@ -55,22 +44,9 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                         minHeight: 280, 
                         background: '#fff',
                         borderRadius: 8,
-                        position: 'relative', 
                     }}
                 >
-                    {isLoading && (
-                        <div 
-                            className="absolute inset-0 z-50 flex items-center justify-center"
-                            style={{ backgroundColor: 'rgba(255, 255, 255, 0.8)', borderRadius: 8 }}
-                        >
-                            <Spin size="large" tip="Đang tải..." />
-                        </div>
-                    )}
-
-                    <div style={{ opacity: isLoading ? 0.5 : 1 }}>
-                        {children}
-                    </div>
-
+                    {children}
                 </Content>
             </Layout>
         </Layout>

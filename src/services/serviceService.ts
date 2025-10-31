@@ -1,8 +1,7 @@
 
-interface ApiResponse<T> {
-  items: T[];
-  totalItems: number;
-}
+import { apiInstance } from '@/constants/api';
+
+const serviceApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
 export interface ServiceApiData {
   id: string;
   name: string;
@@ -25,7 +24,7 @@ interface CreateServiceRequest {
 interface CreateServiceResponseData extends ServiceApiData {
 }
 
-const BASE_SERVICE_API_URL = "https://service.devnest.io.vn/api/service";
+const BASE_SERVICE_API_URL = "/service";
 
 export const serviceService = {
   getServices: async (
@@ -34,13 +33,13 @@ export const serviceService = {
     const pageIndex = 1;
     const pageSize = 10;
     const sortDirection = "asc";
-    const url = `${BASE_SERVICE_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&serviceCategoryId=${categoryId}`;
 
     try {
-      const response = await fetch(url, { method: "GET" });
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
-      const result = await response.json();
-      return result.data as ApiResponse<ServiceApiData>;
+      const response = await serviceApi.get(BASE_SERVICE_API_URL, {
+        params: { pageIndex, pageSize, sortDirection, serviceCategoryId: categoryId }
+      });
+
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -50,13 +49,13 @@ export const serviceService = {
     const pageIndex = 1;
     const pageSize = 100;
     const sortDirection = "asc";
-    const url = `${BASE_SERVICE_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&shopId=${shopId}`;
 
     try {
-      const response = await fetch(url, { method: "GET" });
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
-      const result = await response.json();
-      return result.data as ApiResponse<ServiceApiData>;
+      const response = await serviceApi.get(BASE_SERVICE_API_URL, {
+        params: { pageIndex, pageSize, sortDirection, shopId }
+      });
+
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -69,15 +68,12 @@ export const serviceService = {
     const pageSize = 10;
     const sortDirection = "asc";
 
-    const url = `${BASE_SERVICE_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&serviceCategoryId=${categoryId}`;
-
     try {
-      const response = await fetch(url, { method: "GET" });
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
+      const response = await serviceApi.get(BASE_SERVICE_API_URL, {
+        params: { pageIndex, pageSize, sortDirection, serviceCategoryId: categoryId }
+      });
 
-      const result = await response.json();
-
-      return result.data as ApiResponse<ServiceApiData>;
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -88,23 +84,12 @@ export const serviceService = {
     const pageSize = 10;
     const sortDirection = "asc";
 
-    const url = `https://service.devnest.io.vn/api/service?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&serviceCategoryId=${categoryId}`;
-
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { Accept: "*/*" },
+      const response = await serviceApi.get(BASE_SERVICE_API_URL, {
+        params: { pageIndex, pageSize, sortDirection, serviceCategoryId: categoryId }
       });
 
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
-
-      const result = await response.json();
-      if (!result.success)
-        throw new Error(
-          `Lỗi API: ${result.message || "Không thể lấy dịch vụ"}`
-        );
-
-      return result.data;
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -113,14 +98,11 @@ export const serviceService = {
   createService: async (
     data: CreateServiceRequest
   ): Promise<CreateServiceResponseData> => {
-    const url = BASE_SERVICE_API_URL;
-
     const formData = new FormData();
     formData.append("Name", data.name);
     formData.append("Description", data.description);
     formData.append("ServiceCategoryId", data.serviceCategoryId);
     formData.append("ShopId", data.shopId);
-
     formData.append("Status", data.status ? "true" : "false");
 
     if (data.imageFile) {
@@ -128,53 +110,21 @@ export const serviceService = {
     }
 
     try {
-      const response = await fetch(url, {
-        method: "POST",
-        body: formData,
+      const response = await serviceApi.post(BASE_SERVICE_API_URL, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(`Lỗi API: ${result.message}`);
-      }
-
-      return result.data as CreateServiceResponseData;
+      return response.data.data;
     } catch (error) {
       throw error;
     }
   },
 
   deleteService: async (serviceId: string): Promise<void> => {
-    const url = `${BASE_SERVICE_API_URL}/${serviceId}`;
-
     try {
-      const token = localStorage.getItem("authToken");
-      const headers: HeadersInit = { Accept: "*/*" };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
+      const response = await serviceApi.delete(`${BASE_SERVICE_API_URL}/${serviceId}`);
 
-      const response = await fetch(url, {
-        method: "DELETE",
-        headers,
-      });
-
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(`Lỗi API: ${result.message}`);
-      }
+      // No return data for delete
     } catch (error) {
       throw error;
     }

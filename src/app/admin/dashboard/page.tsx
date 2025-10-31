@@ -2,10 +2,12 @@
 
 import { useState, useMemo, JSX } from 'react';
 import { Card, Row, Col, DatePicker, Select, Statistic, Spin } from 'antd';
-import { UserOutlined, ShopOutlined, DollarCircleOutlined, CalendarOutlined } from '@ant-design/icons';
+import { UserOutlined, ShopOutlined, DollarCircleOutlined } from '@ant-design/icons';
 import AdminLayout from '../components/AdminLayout';
 import moment from 'moment'; 
 import dynamic from 'next/dynamic'; 
+import { useQuery } from '@tanstack/react-query';
+import { authService } from '@/services/authService'; 
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -68,6 +70,12 @@ const aggregateData = (data: RawDataItem[], timeframe: string): AggregatedDataIt
 export default function DashboardPage(): JSX.Element {
     const [timeframe, setTimeframe] = useState('monthly'); 
     
+    // Fetch user count
+    const { data: userCount, isLoading: userCountLoading } = useQuery({
+        queryKey: ['userCount'],
+        queryFn: authService.getUserCount,
+    });
+    
     // Tính toán dữ liệu biểu đồ
     const chartData = useMemo(() => {
         return aggregateData(rawData, timeframe);
@@ -82,10 +90,9 @@ export default function DashboardPage(): JSX.Element {
 
     // Mock data cho các ô thống kê nhanh
     const quickStats = {
-        totalUsers: { value: 12345, growth: 15 },
+        totalUsers: { value: userCount || 12345, growth: 15 },
         totalStores: { value: 350, growth: 5 },
         totalRevenue: { value: 56789, type: 'USD', growth: 'N/A' },
-        totalAppointments: { value: 8900, growth: 12 },
     };
 
 
@@ -118,20 +125,21 @@ export default function DashboardPage(): JSX.Element {
 
             {/* Các ô thống kê nhanh */}
             <Row gutter={[24, 24]} className="mb-8">
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} sm={12} lg={8}>
                     <Card className="shadow-md">
                         <Statistic
                             title="Tổng Người Dùng"
                             value={quickStats.totalUsers.value}
                             prefix={<UserOutlined className="text-blue-500" />}
                             valueStyle={{ color: '#3f8600' }}
+                            loading={userCountLoading}
                         />
                         <p className="text-sm text-gray-500 mt-2">
                             Tăng {quickStats.totalUsers.growth}% so với tháng trước
                         </p>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} sm={12} lg={8}>
                     <Card className="shadow-md">
                         <Statistic
                             title="Tổng Cửa Hàng"
@@ -144,7 +152,7 @@ export default function DashboardPage(): JSX.Element {
                         </p>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} sm={12} lg={8}>
                     <Card className="shadow-md">
                         <Statistic
                             title="Tổng Doanh Thu (K USD)"
@@ -155,19 +163,6 @@ export default function DashboardPage(): JSX.Element {
                         />
                         <p className="text-sm text-gray-500 mt-2">
                             Doanh thu phí dịch vụ
-                        </p>
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card className="shadow-md">
-                        <Statistic
-                            title="Tổng Cuộc Hẹn"
-                            value={quickStats.totalAppointments.value}
-                            prefix={<CalendarOutlined className="text-purple-500" />}
-                            valueStyle={{ color: '#3f8600' }}
-                        />
-                         <p className="text-sm text-gray-500 mt-2">
-                            Tăng {quickStats.totalAppointments.growth}% so với tháng trước
                         </p>
                     </Card>
                 </Col>

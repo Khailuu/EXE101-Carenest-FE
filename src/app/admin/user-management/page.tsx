@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, JSX } from 'react';
+import { useState, JSX, useEffect } from 'react';
 import { 
     Card, Table, Input, Button, Tag, Avatar, Popconfirm, Select, Row, Col, message, Tooltip, 
-    Modal, Descriptions, Form, DatePicker 
+    Modal, Descriptions, Form, DatePicker, Spin
 } from 'antd';
 import { 
     SearchOutlined, EyeOutlined, LockOutlined, UnlockOutlined, 
@@ -11,10 +11,22 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import AdminLayout from '../components/AdminLayout'; 
+import { authApi } from '@/constants/api';
+import { apiInstance } from '@/constants/api'; 
 
 const { Option } = Select;
 
-type UserType = 'Khách hàng' | 'Hội viên' | 'Cửa hàng';
+interface ApiUserData {
+    id: string;
+    username: string;
+    fullName: string | null;
+    email: string;
+    role: string;
+    isActive: boolean;
+    address: string;
+}
+
+type UserType = 'Khách hàng' | 'Hội viên' | 'Cửa hàng' | 'Admin' | 'Manager';
 type UserStatus = 'Hoạt động' | 'Tạm khóa';
 
 interface UserData {
@@ -29,53 +41,6 @@ interface UserData {
     address: string;
 }
 
-const initialUserData: UserData[] = [
-    { 
-        key: '1', 
-        avatar: 'https://i.pravatar.cc/150?img=40', 
-        name: 'Nguyễn Thị C', 
-        email: 'c.nguyen@email.com', 
-        userType: 'Khách hàng', 
-        status: 'Hoạt động', 
-        registeredDate: '01/01/2023',
-        phone: '0901234567',
-        address: 'Quận 1, TP.HCM'
-    },
-    { 
-        key: '2', 
-        avatar: 'https://i.pravatar.cc/150?img=35', 
-        name: 'Trần Văn D', 
-        email: 'd.tran@email.com', 
-        userType: 'Khách hàng', 
-        status: 'Hoạt động', 
-        registeredDate: '15/02/2023',
-        phone: '0907654321',
-        address: 'Quận 7, TP.HCM'
-    },
-    { 
-        key: '3', 
-        avatar: 'https://i.pravatar.cc/150?img=26', 
-        name: 'Lê Thị E', 
-        email: 'e.le@email.com', 
-        userType: 'Hội viên', 
-        status: 'Tạm khóa', 
-        registeredDate: '20/03/2023',
-        phone: '0912345789',
-        address: 'TP. Thủ Đức, TP.HCM'
-    },
-    { 
-        key: '4', 
-        avatar: 'https://i.pravatar.cc/150?img=5', 
-        name: 'Petty Nest Store', 
-        email: 'store@petnest.com', 
-        userType: 'Cửa hàng', 
-        status: 'Hoạt động', 
-        registeredDate: '10/05/2023',
-        phone: '0988776655',
-        address: 'Quận 3, TP.HCM'
-    },
-];
-
 const renderStatusTag = (status: UserStatus): JSX.Element => {
     switch (status) {
         case 'Hoạt động': return <Tag color="success" style={{ fontWeight: 'bold' }}>{status}</Tag>;
@@ -89,15 +54,56 @@ const renderTypeTag = (type: UserType): JSX.Element => {
         case 'Khách hàng': return <Tag color="blue">{type}</Tag>;
         case 'Hội viên': return <Tag color="gold">{type}</Tag>;
         case 'Cửa hàng': return <Tag color="purple">{type}</Tag>;
+        case 'Admin': return <Tag color="red">{type}</Tag>;
+        case 'Manager': return <Tag color="orange">{type}</Tag>;
         default: return <Tag>{type}</Tag>;
     }
 };
 
 export default function UserManagementPage(): JSX.Element {
-    const [userData, setUserData] = useState<UserData[]>(initialUserData);
+    const [userData, setUserData] = useState<UserData[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedType, setSelectedType] = useState('all');
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const adminApi = apiInstance.create({ baseURL: process.env.NEXT_PUBLIC_MANAGE_AUTH_API });
+                const response = await adminApi.get('/admin/accounts');
+                const apiData: ApiUserData[] = response.data.data;
+                const mappedData: UserData[] = apiData.map(user => ({
+                    key: user.id,
+                    avatar: 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 50), // Random avatar
+                    name: user.username,
+                    email: user.email,
+                    userType: mapRoleToUserType(user.role),
+                    status: user.isActive ? 'Hoạt động' : 'Tạm khóa',
+                    registeredDate: '', // API không có
+                    phone: '', // API không có
+                    address: user.address
+                }));
+                setUserData(mappedData);
+            } catch (error) {
+                console.error('Failed to fetch users:', error);
+                message.error('Không thể tải danh sách người dùng');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUsers();
+    }, []);
+
+    const mapRoleToUserType = (role: string): UserType => {
+        switch (role) {
+            case 'ROLE_ADMIN': return 'Admin';
+            case 'ROLE_MANAGER': return 'Manager';
+            case 'ROLE_SHOP': return 'Cửa hàng';
+            case 'ROLE_USER': return 'Khách hàng';
+            default: return 'Khách hàng';
+        }
+    };
 
     const handleViewDetails = (user: UserData) => {
         setSelectedUser(user);
@@ -196,7 +202,8 @@ export default function UserManagementPage(): JSX.Element {
                             <Option value="all">Tất cả</Option>
                             <Option value="Hoạt động">Hoạt động</Option>
                             <Option value="Tạm khóa">Tạm khóa</Option>
-                            <Option value="Hội viên">Hội viên</Option>
+                            <Option value="Admin">Admin</Option>
+                            <Option value="Manager">Manager</Option>
                             <Option value="Khách hàng">Khách hàng</Option>
                             <Option value="Cửa hàng">Cửa hàng</Option>
                         </Select>
@@ -212,6 +219,7 @@ export default function UserManagementPage(): JSX.Element {
                 bordered
                 className="rounded-lg overflow-hidden shadow-lg"
                 scroll={{ x: 1000 }}
+                loading={loading}
                 footer={() => (
                     <div className="text-gray-600 font-semibold">
                         Tổng: {filteredUserData.length} người dùng

@@ -5,7 +5,6 @@ import {
   BarChartOutlined,
   UserOutlined,
   ShopOutlined,
-  CalendarOutlined, 
   TeamOutlined, 
   LogoutOutlined,
 } from "@ant-design/icons";
@@ -46,11 +45,6 @@ export default function AdminSidebar(): JSX.Element {
       key: "/admin/store-management",
       icon: <ShopOutlined className="text-xl" />,
       label: "Quản lý cửa hàng",
-    },
-    {
-      key: "/admin/orders-and-services",
-      icon: <CalendarOutlined className="text-xl" />,
-      label: "Dịch vụ & lịch hẹn",
     },
     {
       key: "/admin/community-management",

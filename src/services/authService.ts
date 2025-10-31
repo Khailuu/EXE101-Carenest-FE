@@ -9,7 +9,7 @@ export const authService = {
 
   registerOwner: async (data: OwnerRegistrationPayload): Promise<string> => {
     const response: AxiosResponse = await shopsApi.post(
-      '/register', // Endpoint chỉ là /register
+      '/shop/register', // Endpoint chỉ là /register
       data
     );
     const xKeyAPT = (
@@ -31,7 +31,7 @@ export const authService = {
       otp: otp.trim() 
     }; 
 
-    await authApi.post('/registerVerifyToken', payload, { 
+    await authApi.post('/auth/registerVerifyToken', payload, { 
       headers: {
         [X_KEY_APT_REQUEST_KEY]: xKeyAPT, 
       }
@@ -41,7 +41,7 @@ export const authService = {
 
   resendOtp: async (email: string, xKeyAPT: string): Promise<void> => {
     // SỬ DỤNG authApi (Base URL: .../api/auth)
-    await authApi.post('/resendOTP', { email }, { 
+    await authApi.post('/auth/resendOTP', { email }, { 
       headers: {
         [X_KEY_APT_REQUEST_KEY]: xKeyAPT,
       }
@@ -50,7 +50,7 @@ export const authService = {
   
   login: async (data: LoginPayload): Promise<string> => {
     const response: AxiosResponse<LoginResponse> = await authApi.post(
-      '/login', 
+      '/auth/login', 
       data
     );
     console.log(response)
@@ -61,7 +61,12 @@ export const authService = {
     }
     
     return accessToken; // Trả về Access Token
-  }
+  },
+
+  getUserCount: async (): Promise<number> => {
+    const response: AxiosResponse = await authApi.get('/auth/admin/accounts/count');
+    return response.data.data; // API trả về data: 5
+  },
 };
 
 
