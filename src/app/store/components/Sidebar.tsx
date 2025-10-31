@@ -7,7 +7,6 @@ import {
   CalendarOutlined,
   ShopOutlined,
   InfoCircleOutlined,
-  TeamOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
 // Loại bỏ Link khỏi import vì chúng ta sẽ dùng onClick
@@ -55,7 +54,7 @@ export default function Sidebar() {
       icon: <CalendarOutlined className="text-xl" />,
       label: (
         <div className="text-lg">
-          Lịch hẹn
+          Lịch hẹn và đơn hàng
         </div>
       ),
     },
@@ -77,15 +76,6 @@ export default function Sidebar() {
         </div>
       ),
     },
-    {
-      key: "/store/staff",
-      icon: <TeamOutlined className="text-xl" />,
-      label: (
-        <div className="text-lg">
-          Quản lý nhân viên
-        </div>
-      ),
-    },
   ];
 
   return (
@@ -95,7 +85,7 @@ export default function Sidebar() {
       collapsedWidth="0" 
       className="z-10 shadow-xl"
       style={{
-        background: "linear-gradient(180deg, #4dd0e1 0%, #26a69a 100%)",
+        background: "linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%)",
       }}
     >
       {/* Logo Section (GIỮ NGUYÊN UI) */}
@@ -128,6 +118,7 @@ export default function Sidebar() {
           backgroundColor: "transparent",
           color: "white",
           fontSize: "16px",
+          fontWeight: "bold",
         }}
         theme="dark" 
       />

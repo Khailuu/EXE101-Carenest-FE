@@ -2,17 +2,14 @@ import axios, {AxiosInstance, InternalAxiosRequestConfig, CreateAxiosDefaults } 
 
 // Lấy base URL cho API quản lý cửa hàng (cần được định nghĩa trong .env.local)
 export const MANAGE_SHOPS_API = process.env.NEXT_PUBLIC_MANAGE_SHOPS_API;
-const SHOPS_API_BASE_URL = process.env.NEXT_PUBLIC_MANAGE_SHOPS_API;
-const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_MANAGE_AUTH_API;
-// Thêm Base URL cho Appointment API
-const APPOINTMENT_API_BASE_URL = process.env.NEXT_PUBLIC_MANAGE_APPOINTMENT_API;
+const GATEWAY_BASE_URL = 'https://gateway.devnest.io.vn';
 
 // 1. Instance chung cho các API có yêu cầu Bearer Token (Đã đăng nhập)
 export const apiInstance = {
     create: (configDefault?: CreateAxiosDefaults) => {
         const api = axios.create({
             // BaseURL tạm thời, sẽ bị ghi đè khi gọi create
-            baseURL: MANAGE_SHOPS_API, 
+            baseURL: GATEWAY_BASE_URL, 
             ...configDefault
         });
         api.interceptors.request.use((config) => {
@@ -34,18 +31,18 @@ export const apiInstance = {
 
 // 2. Instance API không cần Bearer Token
 export const shopsApi: AxiosInstance = axios.create({
-  baseURL: SHOPS_API_BASE_URL, 
+  baseURL: GATEWAY_BASE_URL, 
 });
 
 export const authApi: AxiosInstance = axios.create({
-  baseURL: AUTH_API_BASE_URL,
+  baseURL: GATEWAY_BASE_URL,
 });
 
 export const registrationApi = axios.create({
-    baseURL: MANAGE_SHOPS_API,
+    baseURL: GATEWAY_BASE_URL,
 });
 
 // 3. Instance cho Appointment API (CẦN Bearer Token)
 export const appointmentApi: AxiosInstance = apiInstance.create({
-    baseURL: APPOINTMENT_API_BASE_URL,
+    baseURL: GATEWAY_BASE_URL,
 });

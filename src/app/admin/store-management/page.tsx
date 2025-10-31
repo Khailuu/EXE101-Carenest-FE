@@ -1,88 +1,41 @@
 "use client";
 
-import { useState, JSX } from 'react';
-import { Card, Table, Input, Button, Tag, Avatar, Popconfirm, Select, Row, Col, message, Tooltip, Modal, Descriptions } from 'antd';
+import { useState, JSX, useEffect } from 'react';
+import { Card, Table, Input, Button, Tag, Avatar, Popconfirm, Select, Row, Col, message, Tooltip, Modal, Descriptions, Spin } from 'antd';
 import { SearchOutlined, EyeOutlined, LockOutlined, UnlockOutlined, CheckCircleOutlined, PhoneOutlined, MailOutlined, HomeOutlined, CalendarOutlined, BankOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import AdminLayout from '../components/AdminLayout'; 
+import { shopsApi } from '@/constants/api'; 
 
-const { Option } = Select;
+interface ApiStoreData {
+    id: string;
+    ownerId: string;
+    name: string;
+    description: string;
+    status: number;
+    imgUrl: string;
+    workingDays: string;
+    bankAccountName: string;
+    bankAccountNumber: string;
+    bankName: string;
+    bankCode: string;
+    note: string;
+}
 
 type StoreStatus = 'Hoạt động' | 'Tạm khóa' | 'Chờ duyệt';
 
 interface StoreData {
     key: string;
+    id: string;
     logo: string;
     name: string;
-    owner: string;
-    email: string;
-    branchCount: number;
+    ownerId: string;
+    description: string;
     status: StoreStatus;
-    registeredDate: string;
-    phone: string;
-    serviceDescription: string;
-    workingHours: string; // THÔNG TIN MỚI
-    bankInfo: string; // THÔNG TIN MỚI
+    workingDays: string;
+    bankInfo: string;
+    note: string;
 }
-
-const initialStoreData: StoreData[] = [
-    { 
-        key: '1', 
-        logo: 'https://i.pravatar.cc/150?img=1', 
-        name: 'Pet Shop Sài Gòn', 
-        owner: 'Nguyễn Văn A', 
-        email: 'storeA@email.com', 
-        branchCount: 2, 
-        status: 'Hoạt động', 
-        registeredDate: '10/05/2023', 
-        phone: '0901112233', 
-        serviceDescription: 'Chăm sóc thú cưng cao cấp tại Sài Gòn', 
-        workingHours: 'T2-T6: 8:00-18:00', 
-        bankInfo: 'Vietcombank - ****1234' 
-    },
-    { 
-        key: '2', 
-        logo: 'https://i.pravatar.cc/150?img=2', 
-        name: 'Happy Pet Care', 
-        owner: 'Trần Thị B', 
-        email: 'storeB@email.com', 
-        branchCount: 1, 
-        status: 'Hoạt động', 
-        registeredDate: '20/06/2023', 
-        phone: '0904445566', 
-        serviceDescription: 'Dịch vụ spa và Grooming', 
-        workingHours: '9:00 - 20:00', 
-        bankInfo: 'ACB - ****4321' 
-    },
-    { 
-        key: '3', 
-        logo: 'https://i.pravatar.cc/150?img=3', 
-        name: 'Dog & Cat Spa', 
-        owner: 'Lê Văn C', 
-        email: 'storeC@email.com', 
-        branchCount: 3, 
-        status: 'Tạm khóa', 
-        registeredDate: '01/08/2023', 
-        phone: '0907778899', 
-        serviceDescription: 'Chuyên cung cấp thức ăn nhập khẩu', 
-        workingHours: 'Cả ngày', 
-        bankInfo: 'BIDV - ****5678' 
-    },
-    { 
-        key: '4', 
-        logo: 'https://i.pravatar.cc/150?img=4', 
-        name: 'Cute Pet Shop', 
-        owner: 'Phạm Thị D', 
-        email: 'storeD@email.com', 
-        branchCount: 1, 
-        status: 'Chờ duyệt', 
-        registeredDate: '05/09/2023', 
-        phone: '0909990000', 
-        serviceDescription: 'Mô tả dịch vụ đang chờ duyệt', 
-        workingHours: 'Đang cập nhật', 
-        bankInfo: 'Chưa cập nhật' 
-    },
-];
 
 const renderStatusTag = (status: StoreStatus): JSX.Element => {
     switch (status) {
@@ -94,10 +47,41 @@ const renderStatusTag = (status: StoreStatus): JSX.Element => {
 };
 
 export default function StoreManagementPage(): JSX.Element {
-    const [storeData, setStoreData] = useState<StoreData[]>(initialStoreData);
+    const [storeData, setStoreData] = useState<StoreData[]>([]);
+    const [loading, setLoading] = useState(true);
     const [selectedStatus, setSelectedStatus] = useState('all');
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [selectedStore, setSelectedStore] = useState<StoreData | null>(null);
+
+    useEffect(() => {
+        const fetchStores = async () => {
+            try {
+                const response = await shopsApi.get('/shop', {
+                    params: { pageIndex: 1, pageSize: 10, sortDirection: 'asc' }
+                });
+                const apiData: ApiStoreData[] = response.data.data.items;
+                const mappedData: StoreData[] = apiData.map(store => ({
+                    key: store.id,
+                    id: store.id,
+                    logo: store.imgUrl,
+                    name: store.name,
+                    ownerId: store.ownerId,
+                    description: store.description,
+                    status: store.status === 1 ? 'Hoạt động' : 'Tạm khóa',
+                    workingDays: store.workingDays,
+                    bankInfo: `${store.bankName} - ${store.bankAccountNumber}`,
+                    note: store.note
+                }));
+                setStoreData(mappedData);
+            } catch (error) {
+                console.error('Failed to fetch stores:', error);
+                message.error('Không thể tải danh sách cửa hàng');
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStores();
+    }, []);
 
     const handleViewDetails = (store: StoreData) => {
         setSelectedStore(store);
@@ -133,23 +117,28 @@ export default function StoreManagementPage(): JSX.Element {
         { title: 'Tên cửa hàng', dataIndex: 'name', key: 'name', width: 180, 
           render: (text: string) => <span className="font-medium text-gray-700">{text}</span> 
         },
-        { title: 'Chủ sở hữu', dataIndex: 'owner', key: 'owner', width: 120 },
-        { title: 'Email', dataIndex: 'email', key: 'email', width: 200 },
+        { title: 'Chủ sở hữu ID', dataIndex: 'ownerId', key: 'ownerId', width: 120 },
+        { 
+            title: 'Mô tả', 
+            dataIndex: 'description', 
+            key: 'description', 
+            width: 200,
+            render: (text: string) => <div className="text-sm text-gray-600">{text}</div>
+        },
         { 
             title: <><BankOutlined /> Ngân hàng</>, 
             dataIndex: 'bankInfo', 
             key: 'bankInfo', 
-            width: 150,
-            render: (text: string) => <div className="text-sm">{text}</div> // Cột mới
+            width: 200,
+            render: (text: string) => <div className="text-sm">{text}</div>
         },
         { 
             title: <><ClockCircleOutlined /> Ngày làm việc</>, 
-            dataIndex: 'workingHours', 
-            key: 'workingHours', 
+            dataIndex: 'workingDays', 
+            key: 'workingDays', 
             width: 150,
-            render: (text: string) => <div className="text-sm text-gray-600">{text}</div> // Cột mới
+            render: (text: string) => <div className="text-sm text-gray-600">{text}</div>
         },
-        { title: 'Chi nhánh', dataIndex: 'branchCount', key: 'branchCount', width: 100, align: 'center' },
         { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: renderStatusTag, width: 120, align: 'center' },
         { 
           title: 'Thao tác',
@@ -222,7 +211,7 @@ export default function StoreManagementPage(): JSX.Element {
                     <Col xs={12} lg={4}>
                         <Button
                             size="large"
-                            className="w-full bg-blue-500 text-white border-blue-500 hover:!bg-blue-600 hover:!text-white"
+                            className="w-full bg-blue-500 text-white border-blue-500 hover:bg-blue-600! hover:text-white!"
                         >
                             Tìm kiếm
                         </Button>
@@ -232,28 +221,28 @@ export default function StoreManagementPage(): JSX.Element {
                         <Button 
                             type={selectedStatus === 'all' ? 'primary' : 'default'} 
                             onClick={() => setSelectedStatus('all')}
-                            className={selectedStatus !== 'all' ? 'text-gray-600 !ml-[10px]' : '!ml-[10px] ]bg-green-600 border-green-600'}
+                            className={selectedStatus !== 'all' ? 'text-gray-600 ml-2.5!' : 'ml-2.5! bg-green-600 border-green-600'}
                         >
                             Tất cả ({storeData.length})
                         </Button>
                          <Button 
                             type={selectedStatus === 'Chờ duyệt' ? 'primary' : 'default'} 
                             onClick={() => setSelectedStatus('Chờ duyệt')}
-                            className={selectedStatus !== 'Chờ duyệt' ? 'text-gray-600 !ml-[10px]' : '!ml-[10px] ]bg-yellow-600 border-yellow-600'}
+                            className={selectedStatus !== 'Chờ duyệt' ? 'text-gray-600 ml-2.5!' : 'ml-2.5! bg-yellow-600 border-yellow-600'}
                         >
                             Chờ duyệt ({statusCounts['Chờ duyệt'] || 0})
                         </Button>
                         <Button 
                             type={selectedStatus === 'Hoạt động' ? 'primary' : 'default'} 
                             onClick={() => setSelectedStatus('Hoạt động')}
-                            className={selectedStatus !== 'Hoạt động' ? 'text-gray-600 !ml-[10px]' : '!ml-[10px] ]bg-green-600 border-green-600'}
+                            className={selectedStatus !== 'Hoạt động' ? 'text-gray-600 ml-2.5!' : 'ml-2.5! bg-green-600 border-green-600'}
                         >
                             Hoạt động ({statusCounts['Hoạt động'] || 0})
                         </Button>
                          <Button 
                             type={selectedStatus === 'Tạm khóa' ? 'primary' : 'default'} 
                             onClick={() => setSelectedStatus('Tạm khóa')}
-                            className={selectedStatus !== 'Tạm khóa' ? 'text-gray-600 !ml-[10px]' : '!ml-[10px] ]bg-red-600 border-red-600'}
+                            className={selectedStatus !== 'Tạm khóa' ? 'text-gray-600 ml-2.5!' : 'ml-2.5! bg-red-600 border-red-600'}
                         >
                             Tạm khóa ({statusCounts['Tạm khóa'] || 0})
                         </Button>
@@ -331,14 +320,11 @@ export default function StoreManagementPage(): JSX.Element {
 
                 <Descriptions bordered column={1} size="small" className="mt-4">
                     <Descriptions.Item label={<span className="font-medium"><HomeOutlined /> Tên cửa hàng</span>}>{selectedStore?.name}</Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-medium">Chủ sở hữu</span>}>{selectedStore?.owner}</Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-medium"><MailOutlined /> Email liên hệ</span>}>{selectedStore?.email}</Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-medium"><PhoneOutlined /> Điện thoại</span>}>{selectedStore?.phone}</Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-medium">Số chi nhánh</span>}>{selectedStore?.branchCount}</Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-medium"><CalendarOutlined /> Ngày đăng ký</span>}>{selectedStore?.registeredDate}</Descriptions.Item>
+                    <Descriptions.Item label={<span className="font-medium">ID cửa hàng</span>}>{selectedStore?.id}</Descriptions.Item>
+                    <Descriptions.Item label={<span className="font-medium">Chủ sở hữu ID</span>}>{selectedStore?.ownerId}</Descriptions.Item>
+                    <Descriptions.Item label={<span className="font-medium">Mô tả</span>}>{selectedStore?.description}</Descriptions.Item>
                     <Descriptions.Item label={<span className="font-medium"><BankOutlined /> Ngân hàng</span>}>{selectedStore?.bankInfo}</Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-medium"><ClockCircleOutlined /> Giờ làm việc</span>}>{selectedStore?.workingHours}</Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-medium">Mô tả dịch vụ</span>}>{selectedStore?.serviceDescription}</Descriptions.Item>
+                    <Descriptions.Item label={<span className="font-medium"><ClockCircleOutlined /> Ngày làm việc</span>}>{selectedStore?.workingDays}</Descriptions.Item>
                 </Descriptions>
             </Modal>
         </AdminLayout>

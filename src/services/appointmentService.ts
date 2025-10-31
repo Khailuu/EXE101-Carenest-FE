@@ -56,7 +56,7 @@ export interface AppointmentQueryParams {
 }
 
 
-const APPOINTMENT_ENDPOINT = '';
+const APPOINTMENT_ENDPOINT = '/appointment';
 
 export const appointmentService = {
 

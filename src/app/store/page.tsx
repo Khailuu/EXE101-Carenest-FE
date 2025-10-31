@@ -2,7 +2,9 @@
 import { Card, Row, Col, Progress, Avatar } from "antd";
 import { 
   RiseOutlined,
-  FallOutlined
+  FallOutlined,
+  UserOutlined,
+  StarOutlined
 } from "@ant-design/icons";
 
 export default function DashboardPage() {
@@ -17,7 +19,11 @@ export default function DashboardPage() {
     dailyRevenue: 2450000, 
     earnedCommission: 367500, 
     completedOrders: 1023, 
-    currentTotalRevenue: 45650000 
+    currentTotalRevenue: 45650000,
+
+    totalUsers: 2847, // Số lượng người dùng
+    totalReviews: 156, // Số lượng đánh giá
+    averageRating: 4.5 // Đánh giá trung bình
   };
 
   const formatCurrency = (amount: number): string => {
@@ -126,6 +132,19 @@ export default function DashboardPage() {
               <div className="text-2xl font-bold text-teal-500">
                 {mockData.completedOrders.toLocaleString()}
               </div>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} className="mb-6">
+        <Col xs={24} sm={12} lg={12}>
+          <Card className="h-full rounded-xl shadow-sm border-l-4 border-yellow-500">
+            <div className="text-center">
+              <StarOutlined className="text-yellow-500 text-lg mb-2" />
+              <div className="text-yellow-500 text-sm mb-1">Tổng số đánh giá</div>
+              <div className="text-3xl font-bold text-yellow-600">{mockData.totalReviews}</div>
+              <div className="text-xs text-gray-500 mt-1">⭐ {mockData.averageRating}/5</div>
             </div>
           </Card>
         </Col>

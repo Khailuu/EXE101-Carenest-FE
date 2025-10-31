@@ -1,6 +1,8 @@
-import axios from 'axios';
+import { apiInstance } from '@/constants/api';
 
-const SHOP_API_URL = process.env.NEXT_PUBLIC_MANAGE_SHOP_API || 'https://shop.devnest.io.vn/api/shop';
+const shopApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+
+const SHOP_API_URL = '/shop';
 
 interface Shop {
     id: string;
@@ -30,26 +32,17 @@ interface ShopCreationPayload {
 
 export const shopService = {
     getShops: async (): Promise<ShopListResponse> => {
-        const token = localStorage.getItem('authToken');
-        const response = await axios.get(`${SHOP_API_URL}?pageIndex=1&pageSize=100`, { 
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await shopApi.get(`${SHOP_API_URL}?pageIndex=1&pageSize=100`);
         return response.data.data;
     },
 
     getShopById: async (shopId: string): Promise<Shop> => {
-        const token = localStorage.getItem('authToken');
-        const response = await axios.get(`${SHOP_API_URL}/${shopId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await shopApi.get(`${SHOP_API_URL}/${shopId}`);
         return response.data.data;
     },
 
     checkIfUserOwnsShop: async (userId: string): Promise<string | null> => {
-        const token = localStorage.getItem('authToken');
-        const response = await axios.get(`${SHOP_API_URL}?ownerId=${userId}&pageIndex=1&pageSize=1`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await shopApi.get(`${SHOP_API_URL}?ownerId=${userId}&pageIndex=1&pageSize=1`);
         if (response.data.data.totalItems > 0) {
             return response.data.data.items[0].id;
         } else {
@@ -58,10 +51,7 @@ export const shopService = {
     },
 
     createShop: async (payload: ShopCreationPayload): Promise<Shop> => {
-        const token = localStorage.getItem('authToken');
-        const response = await axios.post(SHOP_API_URL, payload, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await shopApi.post(SHOP_API_URL, payload);
         return response.data.data; 
     },
 };

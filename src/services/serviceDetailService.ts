@@ -1,5 +1,7 @@
 
-interface ApiResponse<T> { items: T[]; totalItems: number; }
+import { apiInstance } from '@/constants/api';
+
+const serviceDetailApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
 
 interface ServiceDetailApiData {
     id: string;
@@ -10,32 +12,20 @@ interface ServiceDetailApiData {
     status: 'Hoạt động' | 'Ngưng hoạt động';
 }
 
-const BASE_SERVICE_DETAIL_API_URL = "https://services-detail.devnest.io.vn/api/servicedetail";
+const BASE_SERVICE_DETAIL_API_URL = "/service-detail/api/servicedetail";
 
 export const serviceDetailService = {
     getServiceDetails: async (shopId: string): Promise<ApiResponse<ServiceDetailApiData>> => {
         const pageIndex = 1;
         const pageSize = 100;
         const sortDirection = "asc";
-        const url = `${BASE_SERVICE_DETAIL_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&shopId=${shopId}`;
 
         try {
-            const token = localStorage.getItem("authToken");
-            const headers: HeadersInit = { Accept: "*/*" };
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
+            const response = await serviceDetailApi.get(BASE_SERVICE_DETAIL_API_URL, {
+                params: { pageIndex, pageSize, sortDirection, shopId }
+            });
 
-            const response = await fetch(url, { method: "GET", headers });
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-            }
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(`Lỗi API: ${result.message}`);
-            }
-            return result.data as ApiResponse<ServiceDetailApiData>;
+            return response.data.data;
         } catch (error) {
             throw error;
         }
@@ -45,32 +35,13 @@ export const serviceDetailService = {
         const pageIndex = 1;
         const pageSize = 10;
         const sortDirection = "asc";
-        const url = `${BASE_SERVICE_DETAIL_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&serviceId=${serviceId}`;
 
         try {
-            const token = localStorage.getItem("authToken");
-            const headers: HeadersInit = { Accept: "*/*" };
-            if (token) {
-                headers.Authorization = `Bearer ${token}`;
-            }
-
-            const response = await fetch(url, {
-                method: "GET",
-                headers,
+            const response = await serviceDetailApi.get(BASE_SERVICE_DETAIL_API_URL, {
+                params: { pageIndex, pageSize, sortDirection, serviceId }
             });
 
-            if (!response.ok) {
-                const errorBody = await response.text();
-                throw new Error(`Lỗi HTTP: ${response.status} - ${errorBody}`);
-            }
-
-            const result = await response.json();
-
-            if (!result.success) {
-                throw new Error(`Lỗi API: ${result.message}`);
-            }
-
-            return result.data as ApiResponse<ServiceDetailApiData>;
+            return response.data.data;
         } catch (error) {
             throw error;
         }

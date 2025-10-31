@@ -1,4 +1,8 @@
-const BASE_CATEGORY_API_URL = "https://category.devnest.io.vn/api/servicecategory";
+import { apiInstance } from '@/constants/api';
+
+const categoryApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+
+const BASE_CATEGORY_API_URL = "/servicecategory";
 
 export interface CategoryApiData {
   id: string;
@@ -40,20 +44,12 @@ export const categoryService = {
     const pageSize = 10;
     const sortDirection = "asc";
 
-    const url = `${BASE_CATEGORY_API_URL}?pageIndex=${pageIndex}&pageSize=${pageSize}&sortDirection=${sortDirection}&shopId=${shopId}`;
-
     try {
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { Accept: "*/*" },
+      const response = await categoryApi.get(BASE_CATEGORY_API_URL, {
+        params: { pageIndex, pageSize, sortDirection, shopId }
       });
 
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
-
-      const result: ApiResponse<ApiDataWrapper<CategoryApiData>> = await response.json();
-      if (!result.success) throw new Error(`Lỗi API: ${result.message}`);
-
-      return result.data;
+      return response.data.data;
     } catch (error) {
       throw error;
     }
@@ -61,50 +57,29 @@ export const categoryService = {
 
   createServiceCategory: async (data: CreateCategoryRequest): Promise<CreateCategoryResponseData> => {
     try {
-      const response = await fetch(BASE_CATEGORY_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "*/*" },
-        body: JSON.stringify(data),
-      });
+      const response = await categoryApi.post(BASE_CATEGORY_API_URL, data);
 
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
-
-      const result: ApiResponse<CreateCategoryResponseData> = await response.json();
-
-      if (!result.success) throw new Error(`Lỗi API: ${result.message}`);
-
-      return result.data;
+      return response.data.data;
     } catch (error) {
       throw error;
     }
   },
 
   updateServiceCategory: async (categoryId: string, data: UpdateCategoryRequest): Promise<void> => {
-    const url = `${BASE_CATEGORY_API_URL}/${categoryId}`;
-
     try {
-      const response = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", Accept: "*/*" },
-        body: JSON.stringify(data),
-      });
+      const response = await categoryApi.put(`${BASE_CATEGORY_API_URL}/${categoryId}`, data);
 
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
+      // No return data for update
     } catch (error) {
       throw error;
     }
   },
 
   deleteServiceCategory: async (categoryId: string): Promise<void> => {
-    const url = `${BASE_CATEGORY_API_URL}/${categoryId}`;
-
     try {
-      const response = await fetch(url, {
-        method: "DELETE",
-        headers: { Accept: "*/*" },
-      });
+      const response = await categoryApi.delete(`${BASE_CATEGORY_API_URL}/${categoryId}`);
 
-      if (!response.ok) throw new Error(`Lỗi HTTP: ${response.status}`);
+      // No return data for delete
     } catch (error) {
       throw error;
     }
