@@ -18,7 +18,7 @@ import ServiceDetailTable from "./components/ServiceDetailTable";
 import ProductCategoryTable from "./components/ProductCategoryTable";
 import { useAppSelector } from '@/redux/hooks';
 
-type StoreFiltersActiveTabType = "Dịch Vụ" | "Sản Phẩm" | "Category" | "Category Sản Phẩm" | "Chi Tiết Sản Phẩm";
+type StoreFiltersActiveTabType = "Dịch Vụ" | "Sản Phẩm" | "Danh mục dịch vụ" | "Danh mục sản phẩm" | "Chi Tiết Sản Phẩm";
 
 export default function StoreServicePage(): JSX.Element {
   const {
@@ -78,7 +78,7 @@ export default function StoreServicePage(): JSX.Element {
     const openModal = (item: StoreItemData | null) => handleOpenFormModal(item);
 
     switch (activeTab) {
-      case "Category":
+      case "Danh mục dịch vụ":
         return (
           <CategoryTable
             data={filteredCategoryData}
@@ -86,7 +86,7 @@ export default function StoreServicePage(): JSX.Element {
             handleOpenFormModal={openModal as any}
           />
         );
-      case "Category Sản Phẩm":
+      case "Danh mục sản phẩm":
         return (
           <ProductCategoryTable
             data={filteredProductCategoryData}

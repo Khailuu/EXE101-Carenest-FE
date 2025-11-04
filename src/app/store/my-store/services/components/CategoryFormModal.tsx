@@ -38,7 +38,7 @@ export default function CategoryFormModal({
   return (
     <Modal
       open={open}
-      title={isEditing ? "Sửa Category" : "Thêm Category mới"}
+      title={isEditing ? "Sửa danh mục" : "Thêm danh mục mới"}
       onCancel={handleCancel}
       footer={[
         <Button key="cancel" onClick={handleCancel}>
@@ -59,13 +59,13 @@ export default function CategoryFormModal({
       >
         <Form.Item
           name="name"
-          label="Tên Category"
+          label="Tên danh mục"
           rules={[
-            { required: true, message: "Vui lòng nhập tên Category!" },
-            { max: 100, message: "Tên Category không quá 100 ký tự!" },
+            { required: true, message: "Vui lòng nhập tên danh mục!" },
+            { max: 100, message: "Tên danh mục không quá 100 ký tự!" },
           ]}
         >
-          <Input placeholder="Nhập tên Category..." />
+          <Input placeholder="Nhập tên danh mục..." />
         </Form.Item>
 
         <Form.Item name="description" label="Mô tả">

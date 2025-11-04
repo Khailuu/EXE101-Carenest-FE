@@ -26,7 +26,7 @@ export default function ProductCategoryFormModal({
 
   return (
     <Modal
-      title={isEditing ? "Sửa Danh mục Sản phẩm" : "Thêm Danh mục Sản phẩm mới"}
+      title={isEditing ? "Sửa danh mục" : "Thêm danh mục mới"}
       open={open}
       onCancel={() => {
         form.resetFields();
@@ -45,10 +45,10 @@ export default function ProductCategoryFormModal({
       <Form form={form} layout="vertical" onFinish={onSubmit}>
         <Form.Item
           name="name"
-          label="Tên Danh mục Sản phẩm"
-          rules={[{ required: true, message: "Vui lòng nhập tên danh mục sản phẩm" }]}
+          label="Tên danh mục"
+          rules={[{ required: true, message: "Vui lòng nhập tên danh mục" }]}
         >
-          <Input placeholder="Nhập tên danh mục sản phẩm" />
+          <Input placeholder="Nhập tên danh mục" />
         </Form.Item>
       </Form>
     </Modal>

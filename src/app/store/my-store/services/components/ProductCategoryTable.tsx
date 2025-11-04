@@ -62,7 +62,7 @@ export default function ProductCategoryTable({ data, handleDelete, handleOpenFor
 
   const columns: ColumnsType<ProductCategoryData> = [
     { title: "ID", dataIndex: "key", key: "key", width: 100 },
-    { title: "Tên Danh mục Sản phẩm", dataIndex: "name", key: "name", width: 200 },
+    { title: "Tên danh mục", dataIndex: "name", key: "name", width: 200 },
     {
       title: "Hành động",
       key: "action",
@@ -74,7 +74,7 @@ export default function ProductCategoryTable({ data, handleDelete, handleOpenFor
             onClick={() => handleOpenForm(record)}
           />
           <Popconfirm
-            title={`Xác nhận xóa danh mục sản phẩm: ${record.name}?`}
+            title={`Xác nhận xóa danh mục: ${record.name}?`}
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
@@ -95,7 +95,7 @@ export default function ProductCategoryTable({ data, handleDelete, handleOpenFor
       {data.length === 0 ? (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="Chưa có danh mục sản phẩm nào, hãy tạo mới."
+          description="Chưa có danh mục nào, hãy tạo mới."
         />
       ) : (
         <Table

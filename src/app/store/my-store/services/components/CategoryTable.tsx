@@ -32,7 +32,7 @@ export default function CategoryTable({ data, handleDelete, handleOpenFormModal 
   const handleSubmit = async (values: any) => {
     try {
       if (!values.name) {
-        message.warning("Vui lòng nhập tên category!");
+        message.warning("Vui lòng nhập tên danh mục!");
         return;
       }
 
@@ -53,25 +53,25 @@ export default function CategoryTable({ data, handleDelete, handleOpenFormModal 
           name: values.name,
           shopId,
         });
-        message.success("Cập nhật category thành công!");
+        message.success("Cập nhật danh mục thành công!");
       } else {
         await categoryService.createServiceCategory({
           name: values.name,
           shopId,
         });
-        message.success("Thêm category thành công!");
+        message.success("Thêm danh mục thành công!");
       }
 
       handleCloseForm();
       fetchData();
     } catch (error) {
-      message.error("Không thể lưu category, vui lòng thử lại!");
+      message.error("Không thể lưu danh mục, vui lòng thử lại!");
     }
   };
 
   const columns: ColumnsType<CategoryData> = [
     { title: "ID", dataIndex: "key", key: "key", width: 100 },
-    { title: "Tên Category", dataIndex: "name", key: "name", width: 200 },
+    { title: "Tên danh mục", dataIndex: "name", key: "name", width: 200 },
     {
       title: "Hành động",
       key: "action",
@@ -83,7 +83,7 @@ export default function CategoryTable({ data, handleDelete, handleOpenFormModal 
             onClick={() => handleOpenForm(record)}
           />
           <Popconfirm
-            title={`Xác nhận xóa category: ${record.name}?`}
+            title={`Xác nhận xóa danh mục: ${record.name}?`}
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
@@ -104,7 +104,7 @@ export default function CategoryTable({ data, handleDelete, handleOpenFormModal 
       {data.length === 0 ? (
         <Empty
           image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="Chưa có category nào, hãy tạo mới."
+          description="Chưa có danh mục nào, hãy tạo mới."
         />
       ) : (
         <Table

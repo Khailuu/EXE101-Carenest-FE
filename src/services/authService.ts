@@ -62,11 +62,6 @@ export const authService = {
     
     return accessToken; // Trả về Access Token
   },
-
-  getUserCount: async (): Promise<number> => {
-    const response: AxiosResponse = await authApi.get('/auth/admin/accounts/count');
-    return response.data.data; // API trả về data: 5
-  },
 };
 
 

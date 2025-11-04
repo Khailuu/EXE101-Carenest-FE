@@ -2,7 +2,7 @@ import axios, {AxiosInstance, InternalAxiosRequestConfig, CreateAxiosDefaults } 
 
 // Lấy base URL cho API quản lý cửa hàng (cần được định nghĩa trong .env.local)
 export const MANAGE_SHOPS_API = process.env.NEXT_PUBLIC_MANAGE_SHOPS_API;
-const GATEWAY_BASE_URL = 'https://gateway.devnest.io.vn';
+const GATEWAY_BASE_URL = process.env.NEXT_PUBLIC_GATEWAY_BASE_URL || 'https://gateway.devnest.io.vn';
 
 // 1. Instance chung cho các API có yêu cầu Bearer Token (Đã đăng nhập)
 export const apiInstance = {

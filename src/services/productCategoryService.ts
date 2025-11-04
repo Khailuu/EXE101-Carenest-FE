@@ -1,6 +1,6 @@
 import { apiInstance } from '@/constants/api';
 
-const productCategoryApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+const productCategoryApi = apiInstance.create();
 
 export interface ProductCategoryApiData {
     id: string;

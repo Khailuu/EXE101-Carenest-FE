@@ -1,7 +1,7 @@
 
 import { apiInstance } from '@/constants/api';
 
-const serviceApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+const serviceApi = apiInstance.create();
 export interface ServiceApiData {
   id: string;
   name: string;

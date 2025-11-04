@@ -7,7 +7,7 @@ import AdminLayout from '../components/AdminLayout';
 import moment from 'moment'; 
 import dynamic from 'next/dynamic'; 
 import { useQuery } from '@tanstack/react-query';
-import { authService } from '@/services/authService'; 
+import { userService } from '@/services/userService'; 
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -73,7 +73,7 @@ export default function DashboardPage(): JSX.Element {
     // Fetch user count
     const { data: userCount, isLoading: userCountLoading } = useQuery({
         queryKey: ['userCount'],
-        queryFn: authService.getUserCount,
+        queryFn: userService.getUserCount,
     });
     
     // Tính toán dữ liệu biểu đồ

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Tag, message } from "antd";
 import type { JSX } from "react";
 
@@ -58,9 +58,9 @@ export interface ServiceDetailData {
 export type StoreTabType =
   | "Dịch Vụ"
   | "Sản Phẩm"
-  | "Category"
+  | "Danh mục dịch vụ"
   | "Chi Tiết Dịch Vụ"
-  | "Category Sản Phẩm"
+  | "Danh mục sản phẩm"
   | "Chi Tiết Sản Phẩm"; // ✅ Thêm hai tab mới
 export type StoreStatusType = "all" | "Hoạt động" | "Ngưng hoạt động";
 export type ItemType = "service" | "product" | "category" | "service-detail" | "product-category"; // ✅ Thêm product-category
@@ -102,6 +102,7 @@ export function useStoreData() {
   // === STATE STATUS ===
   const [shopId, setShopId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingShop, setIsFetchingShop] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // === STATE UI ===
@@ -111,81 +112,120 @@ export function useStoreData() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<StoreItemData | null>(null);
 
-  // === FETCH DATA ===
-  const fetchData = async () => {
+  // === FETCH DATA FUNCTIONS ===
+  const fetchCategories = async (currentShopId: string) => {
+    const categoriesResponse = await categoryService.getServiceCategory(currentShopId);
+    setCategoryData(
+      (categoriesResponse?.items || []).map((item: any) => ({
+        ...item,
+        key: String(item.id || item.key),
+      }))
+    );
+  };
+
+  const fetchProductCategories = async (currentShopId: string) => {
+    const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId);
+    setProductCategoryData(
+      (productCategoriesResponse?.items || []).map((item: any) => ({
+        ...item,
+        key: String(item.id || item.key),
+      }))
+    );
+  };
+
+  const fetchServices = async (currentShopId: string) => {
+    const servicesResponse = await serviceService.getAllServices(currentShopId);
+    setServiceData(
+      (servicesResponse?.items || []).map((item: any) => ({
+        ...item,
+        key: String(item.id || item.key),
+        serviceCategoryId: String(item.serviceCategoryId || item.key),
+      }))
+    );
+  };
+
+  const fetchProducts = async (currentShopId: string) => {
+    const productsResponse = await productService.getProducts(currentShopId);
+    setProductData(
+      (productsResponse?.items || []).map((item: any) => ({
+        ...item,
+        key: String(item.id || item.key),
+        productCategoryId: String(item.productCategoryId || item.key),
+      }))
+    );
+  };
+
+  const fetchServiceDetails = async (currentShopId: string) => {
+    const serviceDetailsResponse = await serviceDetailService.getServiceDetails(currentShopId);
+    setServiceDetailData(
+      (serviceDetailsResponse?.items || []).map((item: any) => ({
+        ...item,
+        key: String(item.id || item.key),
+      }))
+    );
+  };
+
+  // === FETCH SHOP ID ===
+  const fetchShopId = async () => {
+    if (isFetchingShop || shopId) return; // Prevent duplicate calls
+    setIsFetchingShop(true);
+    try {
+      const token = localStorage.getItem("authToken") || "";
+      if (!token) throw new Error("Không tìm thấy token đăng nhập.");
+
+      const userId = getUserIdFromTokenPayload(token);
+      if (!userId) throw new Error("Không thể xác định User ID.");
+
+      const shopResponse = await shopService.getShops();
+      const ownedShop = shopResponse.items?.find(
+        (shop: any) => shop.ownerId === userId
+      );
+
+      if (ownedShop) {
+        setShopId(ownedShop.id);
+      } else {
+        message.warning("Người dùng hiện tại không sở hữu cửa hàng nào.");
+      }
+    } catch (err) {
+      console.error("Lỗi fetch shopId:", err);
+    } finally {
+      setIsFetchingShop(false);
+    }
+  };
+
+  const fetchDataForTab = useCallback(async (tab: StoreTabType) => {
+    if (!shopId || isLoading) return; // Wait for shopId and prevent concurrent fetches
+
     setIsLoading(true);
     setError(null);
-    let currentShopId: string | null = shopId;
 
     try {
-      if (!currentShopId) {
-        const token = localStorage.getItem("authToken") || "";
-        if (!token) throw new Error("Không tìm thấy token đăng nhập.");
-
-        const userId = getUserIdFromTokenPayload(token);
-        if (!userId) throw new Error("Không thể xác định User ID.");
-
-        const shopResponse = await shopService.getShops();
-        const ownedShop = shopResponse.items?.find(
-          (shop: any) => shop.ownerId === userId
-        );
-
-        if (ownedShop) {
-          currentShopId = ownedShop.id;
-          setShopId(currentShopId);
-        } else {
-          message.warning("Người dùng hiện tại không sở hữu cửa hàng nào.");
-          setIsLoading(false);
-          return;
-        }
+      // Fetch data based on active tab
+      switch (tab) {
+        case "Danh mục dịch vụ":
+          if (categoryData.length === 0) await fetchCategories(shopId);
+          break;
+        case "Danh mục sản phẩm":
+          if (productCategoryData.length === 0) await fetchProductCategories(shopId);
+          break;
+        case "Dịch Vụ":
+          if (serviceData.length === 0) await fetchServices(shopId);
+          if (categoryData.length === 0) await fetchCategories(shopId); // Services need categories
+          break;
+        case "Sản Phẩm":
+          if (productData.length === 0) await fetchProducts(shopId);
+          if (productCategoryData.length === 0) await fetchProductCategories(shopId); // Products need product categories
+          break;
+        case "Chi Tiết Dịch Vụ":
+          if (serviceDetailData.length === 0) await fetchServiceDetails(shopId);
+          if (serviceData.length === 0) await fetchServices(shopId); // Service details need services
+          break;
+        case "Chi Tiết Sản Phẩm":
+          // Not implemented yet
+          break;
+        default:
+          break;
       }
-
-      if (!currentShopId) return;
-
-      // === FETCH PARALLEL ===
-      const categoriesResponse = await categoryService.getServiceCategory(currentShopId);
-      const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId); // ✅ Fetch Product Categories
-      const servicesResponse = await serviceService.getAllServices(currentShopId);
-      const productsResponse = await productService.getProducts(currentShopId);
-      const serviceDetailsResponse = await serviceDetailService.getServiceDetails(currentShopId);
-
-      // === UPDATE STATE SAFELY ===
-      setCategoryData(
-        (categoriesResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-        }))
-      );
-
-      setProductCategoryData(
-        (productCategoriesResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-        }))
-      ); // ✅ Update Product Categories State
-
-      setServiceData(
-        (servicesResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-          serviceCategoryId: String(item.serviceCategoryId || item.key),
-        }))
-      );
-
-      setProductData(
-        (productsResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-          productCategoryId: String(item.productCategoryId || item.key),
-        }))
-      );
-
-      setServiceDetailData(
-        (serviceDetailsResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-        }))
-      );
     } catch (err: any) {
       console.error("Lỗi API khi lấy dữ liệu:", err);
       setError(
@@ -196,11 +236,19 @@ export function useStoreData() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [shopId, isLoading, categoryData.length, productCategoryData.length, serviceData.length, productData.length, serviceDetailData.length]);
 
   useEffect(() => {
-    fetchData();
-  }, [shopId]);
+    if (!shopId && !isFetchingShop) {
+      fetchShopId();
+    }
+  }, []); // Only on mount
+
+  useEffect(() => {
+    if (shopId && !isLoading) {
+      fetchDataForTab(activeTab);
+    }
+  }, [activeTab, shopId, fetchDataForTab]);
 
   // === HÀM MỞ FORM MODAL ===
   const handleOpenFormModal = (item: StoreItemData | null) => {
@@ -233,7 +281,7 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+      fetchDataForTab(activeTab);
       return;
     }
 
@@ -254,7 +302,7 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+      fetchDataForTab(activeTab);
       return;
     }
 
@@ -279,7 +327,7 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+      fetchDataForTab(activeTab);
       return;
     }
 
@@ -307,7 +355,7 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+      fetchDataForTab(activeTab);
       return;
     }
   } catch (err: any) {
@@ -323,19 +371,19 @@ const handleSave = async (values: any, type: ItemType) => {
       if (type === "service") {
         await serviceService.deleteService(key);
         message.success("Đã xóa dịch vụ!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        fetchDataForTab(activeTab); // Gọi fetchData để cập nhật dữ liệu
       } else if (type === "product") {
         await productService.deleteProduct(key); // ✅ Gọi deleteProduct
         message.success("Đã xóa sản phẩm!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        fetchDataForTab(activeTab); // Gọi fetchData để cập nhật dữ liệu
       } else if (type === "category") {
         await categoryService.deleteServiceCategory(key); // ✅ Gọi deleteServiceCategory
         message.success("Đã xóa danh mục!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        fetchDataForTab(activeTab); // Gọi fetchData để cập nhật dữ liệu
       } else if (type === "product-category") {
         await productCategoryService.deleteProductCategory(key); // ✅ Gọi deleteProductCategory
         message.success("Đã xóa danh mục sản phẩm!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        fetchDataForTab(activeTab); // Gọi fetchData để cập nhật dữ liệu
       } else if (type === "service-detail") {
         // TODO: Implement deleteServiceDetail
         message.warning("Chức năng xóa chi tiết dịch vụ chưa được triển khai!");
@@ -403,7 +451,7 @@ return {
   handleSave,
   handleDelete,
   handleOpenFormModal,
-  fetchData,
+  fetchDataForTab,
   categoryData,
   serviceData,
   productData,

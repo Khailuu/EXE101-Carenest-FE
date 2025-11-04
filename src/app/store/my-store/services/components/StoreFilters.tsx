@@ -7,6 +7,7 @@ import { CategoryData, StoreTabType, ItemType } from "../hooks/useStoreData";
 import CategoryFormModal from "./form/CategoryFormModal";
 import ServiceFormModal from "./form/ServiceFormModal";
 import ProductFormModal from "./form/ProductFormModal";
+import ProductCategoryFormModal from "./form/ProductCategoryFormModal";
 
 interface StoreFiltersProps {
   activeTab: StoreTabType;
@@ -35,9 +36,11 @@ export default function StoreFilters({
 }: StoreFiltersProps): JSX.Element {
 
   const handleSubmit = async (values: any) => {
-    if (activeTab === "Category") {
+    if (activeTab === "Danh mục dịch vụ") {
       values.shopId = "SHOP_ID_CUA_BAN";
       await handleSave(values, "category");
+    } else if (activeTab === "Danh mục sản phẩm") {
+      await handleSave(values, "product-category");
     } else if (activeTab === "Dịch Vụ") {
       await handleSave(values, "service");
     } else if (activeTab === "Sản Phẩm") {
@@ -79,8 +82,12 @@ export default function StoreFilters({
         </Col>
       </Row>
 
-      {activeTab === "Category" && (
+      {activeTab === "Danh mục dịch vụ" && (
         <CategoryFormModal open={isFormModalOpen} onCancel={() => setIsFormModalOpen(false)} onSubmit={handleSubmit} />
+      )}
+
+      {activeTab === "Danh mục sản phẩm" && (
+        <ProductCategoryFormModal open={isFormModalOpen} onCancel={() => setIsFormModalOpen(false)} onSubmit={handleSubmit} />
       )}
 
       {activeTab === "Dịch Vụ" && (

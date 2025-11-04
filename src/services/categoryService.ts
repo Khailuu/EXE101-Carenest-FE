@@ -1,6 +1,6 @@
 import { apiInstance } from '@/constants/api';
 
-const categoryApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+const categoryApi = apiInstance.create();
 
 const BASE_CATEGORY_API_URL = "/servicecategory";
 

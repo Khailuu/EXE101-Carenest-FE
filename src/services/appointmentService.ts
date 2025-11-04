@@ -42,17 +42,37 @@ export interface AppointmentListResponse {
     };
 }
 
-// Kiểu dữ liệu cho Tham số phân trang và lọc
-export interface AppointmentQueryParams {
-    page?: number;
-    pageSize?: number;
-    sortDirection?: 'asc' | 'desc';
-    sortField?: string;
-    search?: string;
-    shopId?: string;
-    status?: string;
-    startDate?: string; // YYYY-MM-DD
-    endDate?: string; // YYYY-MM-DD
+// Kiểu dữ liệu cho Stats
+export interface ServiceDetailStat {
+    serviceDetailId: string;
+    serviceDetailName: string;
+    serviceId: string;
+    serviceName: string;
+    count: number;
+    shopId: string | null;
+    shopName: string | null;
+}
+
+export interface ServiceStat {
+    serviceId: string;
+    serviceName: string;
+    count: number;
+    shopId: string | null;
+    shopName: string | null;
+}
+
+export interface ShopStat {
+    shopId: string;
+    shopName: string;
+    count: number;
+}
+
+export interface AppointmentDashboardResponse {
+    serviceDetailStats: ServiceDetailStat[];
+    serviceStats: ServiceStat[];
+    shopStats: ShopStat[] | null;
+    shopId: string | null;
+    shopName: string | null;
 }
 
 
@@ -96,6 +116,27 @@ export const appointmentService = {
             }
             console.error("Unknown error fetching appointments:", error);
             throw new Error("An unexpected error occurred while fetching appointments.");
+        }
+    },
+
+    getDashboardStats: async (shopId?: string): Promise<AppointmentDashboardResponse> => {
+        try {
+            const params: Record<string, any> = {};
+            if (shopId) params.shopId = shopId;
+
+            const response: AxiosResponse<{ success: boolean; message: string; data: AppointmentDashboardResponse }> = await appointmentApi.get(
+                '/appointmentdetail/dashboard',
+                { params }
+            );
+
+            return response.data.data;
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response) {
+                console.error("Error fetching dashboard stats:", error.response.data);
+                throw new Error(error.response.data.message || `API error with status ${error.response.status}`);
+            }
+            console.error("Unknown error fetching dashboard stats:", error);
+            throw new Error("An unexpected error occurred while fetching dashboard stats.");
         }
     },
 

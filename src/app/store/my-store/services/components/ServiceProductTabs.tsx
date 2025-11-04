@@ -8,8 +8,8 @@ interface ServiceProductTabsProps {
 }
 
 const tabConfig: { key: StoreTabType; label: string }[] = [
-    { key: 'Category', label: 'Category' },
-    { key: 'Category Sản Phẩm', label: 'Category Sản Phẩm' },
+    { key: 'Danh mục dịch vụ', label: 'Danh mục dịch vụ' },
+    { key: 'Danh mục sản phẩm', label: 'Danh mục sản phẩm' },
     { key: 'Dịch Vụ', label: 'Dịch Vụ' },
     { key: 'Chi Tiết Dịch Vụ', label: 'Chi Tiết Dịch Vụ' },
     { key: 'Sản Phẩm', label: 'Sản Phẩm' },
