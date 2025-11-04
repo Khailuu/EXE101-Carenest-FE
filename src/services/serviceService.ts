@@ -1,7 +1,8 @@
 
 import { apiInstance } from '@/constants/api';
+import { AxiosResponse } from 'axios';
 
-const serviceApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+const serviceApi = apiInstance.create({ baseURL: 'https://enormous-terrie-nghi-dna-dddc2780.koyeb.app/api' });
 export interface ServiceApiData {
   id: string;
   name: string;
@@ -29,7 +30,7 @@ const BASE_SERVICE_API_URL = "/service";
 export const serviceService = {
   getServices: async (
     categoryId: string
-  ): Promise<ApiResponse<ServiceApiData>> => {
+  ): Promise<AxiosResponse<ServiceApiData>> => {
     const pageIndex = 1;
     const pageSize = 10;
     const sortDirection = "asc";
@@ -45,14 +46,14 @@ export const serviceService = {
     }
   },
 
-  getAllServices: async (shopId: string): Promise<ApiResponse<ServiceApiData>> => {
+  getAllServices: async (categoryId: string): Promise<AxiosResponse<ServiceApiData>> => {
     const pageIndex = 1;
     const pageSize = 100;
     const sortDirection = "asc";
 
     try {
       const response = await serviceApi.get(BASE_SERVICE_API_URL, {
-        params: { pageIndex, pageSize, sortDirection, shopId }
+        params: { pageIndex, pageSize, sortDirection, categoryId }
       });
 
       return response.data.data;
@@ -63,7 +64,7 @@ export const serviceService = {
 
   getServicesByCategoryId: async (
     categoryId: string
-  ): Promise<ApiResponse<ServiceApiData>> => {
+  ): Promise<AxiosResponse<ServiceApiData>> => {
     const pageIndex = 1;
     const pageSize = 10;
     const sortDirection = "asc";
@@ -97,7 +98,7 @@ export const serviceService = {
 
   createService: async (
     data: CreateServiceRequest
-  ): Promise<CreateServiceResponseData> => {
+  ): Promise<AxiosResponse<CreateServiceResponseData>> => {
     const formData = new FormData();
     formData.append("Name", data.name);
     formData.append("Description", data.description);
@@ -120,11 +121,10 @@ export const serviceService = {
     }
   },
 
-  deleteService: async (serviceId: string): Promise<void> => {
+  deleteService: async (serviceId: string): Promise<AxiosResponse<void>> => {
     try {
       const response = await serviceApi.delete(`${BASE_SERVICE_API_URL}/${serviceId}`);
-
-      // No return data for delete
+      return response;
     } catch (error) {
       throw error;
     }

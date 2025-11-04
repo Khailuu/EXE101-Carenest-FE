@@ -1,6 +1,6 @@
 import { apiInstance } from '@/constants/api';
 
-const shopApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+const shopApi = apiInstance.create({ baseURL: 'https://enormous-terrie-nghi-dna-dddc2780.koyeb.app/api' });
 
 const SHOP_API_URL = '/shop';
 

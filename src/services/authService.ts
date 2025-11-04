@@ -9,7 +9,7 @@ export const authService = {
 
   registerOwner: async (data: OwnerRegistrationPayload): Promise<string> => {
     const response: AxiosResponse = await shopsApi.post(
-      '/shop/register', // Endpoint chỉ là /register
+      '/shops/register', // Endpoint chỉ là /register
       data
     );
     const xKeyAPT = (

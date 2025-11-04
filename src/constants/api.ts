@@ -35,7 +35,7 @@ export const shopsApi: AxiosInstance = axios.create({
 });
 
 export const authApi: AxiosInstance = axios.create({
-  baseURL: GATEWAY_BASE_URL,
+    baseURL: "https://carenestauthorize-production.up.railway.app/api",
 });
 
 export const registrationApi = axios.create({

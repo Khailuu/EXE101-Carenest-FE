@@ -1,8 +1,9 @@
 import { apiInstance } from '@/constants/api';
+import { AxiosResponse } from 'axios';
 
-const categoryApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
+const categoryApi = apiInstance.create({ baseURL: 'https://near-anthea-nghi-dna-28c211f8.koyeb.app/api/servicecategory/by-shop' });
 
-const BASE_CATEGORY_API_URL = "/servicecategory";
+const BASE_CATEGORY_API_URL = "/";
 
 export interface CategoryApiData {
   id: string;
@@ -39,47 +40,42 @@ export interface CreateCategoryResponseData extends CategoryApiData {
 }
 
 export const categoryService = {
-  getServiceCategory: async (shopId: string): Promise<ApiDataWrapper<CategoryApiData>> => {
-    const pageIndex = 1;
-    const pageSize = 10;
-    const sortDirection = "asc";
-
+  getServiceCategory: async (shopId: string): Promise<AxiosResponse<CategoryApiData>> => {
     try {
-      const response = await categoryApi.get(BASE_CATEGORY_API_URL, {
-        params: { pageIndex, pageSize, sortDirection, shopId }
-      });
+      // Call: GET https://.../api/servicecategory/by-shop/{shopId}
+      const response = await categoryApi.get(`/${shopId}`);
 
-      return response.data.data;
+      return response;
     } catch (error) {
       throw error;
     }
   },
 
-  createServiceCategory: async (data: CreateCategoryRequest): Promise<CreateCategoryResponseData> => {
+  createServiceCategory: async (data: CreateCategoryRequest): Promise<AxiosResponse<CreateCategoryResponseData>> => {
     try {
       const response = await categoryApi.post(BASE_CATEGORY_API_URL, data);
 
-      return response.data.data;
+      return response;
     } catch (error) {
       throw error;
     }
   },
 
-  updateServiceCategory: async (categoryId: string, data: UpdateCategoryRequest): Promise<void> => {
+  updateServiceCategory: async (categoryId: string, data: UpdateCategoryRequest): Promise<AxiosResponse<void>> => {
     try {
       const response = await categoryApi.put(`${BASE_CATEGORY_API_URL}/${categoryId}`, data);
 
-      // No return data for update
+      return response;
     } catch (error) {
       throw error;
     }
   },
 
-  deleteServiceCategory: async (categoryId: string): Promise<void> => {
+  deleteServiceCategory: async (categoryId: string): Promise<AxiosResponse<void>> => {
     try {
       const response = await categoryApi.delete(`${BASE_CATEGORY_API_URL}/${categoryId}`);
 
-      // No return data for delete
+              return response;
     } catch (error) {
       throw error;
     }
