@@ -1,4 +1,4 @@
-import { Table, Button, Popconfirm, Empty, message } from "antd";
+import { Table, Button, Popconfirm, Empty, message, Spin } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { useState } from "react";
@@ -11,9 +11,10 @@ interface ProductCategoryTableProps {
   data: ProductCategoryData[];
   handleDelete: (key: string, type: ItemType) => Promise<void>;
   handleOpenFormModal: (item: ProductCategoryData | null) => void;
+  isLoading?: boolean;
 }
 
-export default function ProductCategoryTable({ data, handleDelete, handleOpenFormModal }: ProductCategoryTableProps): JSX.Element {
+export default function ProductCategoryTable({ data, handleDelete, handleOpenFormModal, isLoading = false }: ProductCategoryTableProps): JSX.Element {
   const { fetchData, shopId } = useStoreData();
   const [openModal, setOpenModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ProductCategoryData | null>(null);
@@ -92,19 +93,22 @@ export default function ProductCategoryTable({ data, handleDelete, handleOpenFor
 
   return (
     <>
-      {data.length === 0 ? (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="Chưa có danh mục sản phẩm nào, hãy tạo mới."
-        />
-      ) : (
-        <Table
-          columns={columns}
-          dataSource={data}
-          pagination={{ pageSize: 7 }}
-          rowKey="key"
-        />
-      )}
+      <Spin spinning={isLoading} tip="Đang tải...">
+        {data.length === 0 && !isLoading ? (
+          <Empty
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description="Chưa có danh mục sản phẩm nào, hãy tạo mới."
+          />
+        ) : (
+          <Table
+            columns={columns}
+            dataSource={data}
+            pagination={{ pageSize: 7 }}
+            rowKey="key"
+            loading={isLoading}
+          />
+        )}
+      </Spin>
 
       <ProductCategoryFormModal
         open={openModal}

@@ -4,7 +4,7 @@ import { JSX } from "react";
 import { Card } from "antd";
 import { useStoreData, StoreItemData } from "./hooks/useStoreData";
 import { useState, useEffect } from 'react';
-import { AutoComplete, Input } from 'antd';
+import { AutoComplete, Input, Select } from 'antd';
 import { RootState } from '@/redux/store';
 import { serviceService, ServiceApiData } from '@/services/serviceService';
 
@@ -17,6 +17,7 @@ import CategoryTable from "./components/CategoryTable";
 import ServiceDetailTable from "./components/ServiceDetailTable";
 import ProductCategoryTable from "./components/ProductCategoryTable";
 import { useAppSelector } from '@/redux/hooks';
+import ProductDetailTab from "./components/ProductDetailTab";
 
 type StoreFiltersActiveTabType = "Dịch Vụ" | "Sản Phẩm" | "Category" | "Category Sản Phẩm" | "Chi Tiết Sản Phẩm";
 
@@ -43,6 +44,9 @@ export default function StoreServicePage(): JSX.Element {
     setIsFormModalOpen,
     editingItem,
     isLoading,
+    selectedProductCategoryId,
+    setSelectedProductCategoryId,
+    selectProductCategory,
   } = useStoreData();
 
   const shopId = useAppSelector((state) => state.user.shopId);
@@ -54,7 +58,7 @@ export default function StoreServicePage(): JSX.Element {
       const fetchServices = async () => {
         try {
           const response = await serviceService.getAllServices(shopId);
-          const options = response.items.map(service => ({
+          const options = (response.data?.items || []).map((service: ServiceApiData) => ({
             value: service.id,
             label: service.name,
           }));
@@ -92,6 +96,7 @@ export default function StoreServicePage(): JSX.Element {
             data={filteredProductCategoryData}
             handleDelete={handleDelete as any}
             handleOpenFormModal={openModal as any}
+            isLoading={isLoading}
           />
         );
       case "Dịch Vụ":
@@ -132,19 +137,33 @@ export default function StoreServicePage(): JSX.Element {
         );
       case "Sản Phẩm":
         return (
-          <ProductTable
-            data={filteredProductData}
-            handleDelete={handleDelete}
-            handleOpenFormModal={openModal as any}
-          />
+          <>
+            <div className="mb-4">
+              <Select
+                showSearch
+                optionFilterProp="label"
+                size="large"
+                style={{ width: '100%' }}
+                placeholder="Chọn danh mục sản phẩm"
+                options={(productCategoryData || []).map((c) => ({ value: c.key, label: c.name }))}
+                value={selectedProductCategoryId || undefined}
+                onChange={(value) => selectProductCategory(value)}
+              />
+            </div>
+            <ProductTable
+              data={filteredProductData}
+              handleDelete={handleDelete}
+              handleOpenFormModal={openModal as any}
+              isLoading={isLoading}
+            />
+          </>
         );
-      case "Chi Tiết Sản Phẩm":
-        return (
-          <div>Chức năng Chi Tiết Sản Phẩm sẽ được phát triển sau.</div>
-        );
-      default:
-        return null;
-    }
+        case "Chi Tiết Sản Phẩm":
+          // nhớ import ở đầu
+          return <ProductDetailTab />;
+        default:
+          return null;
+      }
   };
 
   return (

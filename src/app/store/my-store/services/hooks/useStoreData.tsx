@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Tag, message } from "antd";
 import type { JSX } from "react";
 
@@ -98,6 +98,33 @@ export function useStoreData() {
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [productCategoryData, setProductCategoryData] = useState<ProductCategoryData[]>([]); // ✅ Thêm state mới
   const [serviceDetailData, setServiceDetailData] = useState<ServiceDetailData[]>([]);
+  const [selectedProductCategoryId, setSelectedProductCategoryId] = useState<string | null>(null);
+  const fetchProductsByCategoryId = async (categoryId: string) => {
+    const productsResponse = await productService.getProductsByCategory(categoryId);
+    setProductData(
+      (productsResponse?.items || []).map((item: any) => {
+        let firstImage = "";
+        try {
+          const arr = typeof item.imgUrls === 'string' ? JSON.parse(item.imgUrls) : item.imgUrls;
+          firstImage = Array.isArray(arr) && arr.length > 0 ? String(arr[0]) : "";
+        } catch (_) {
+          firstImage = "";
+        }
+        return {
+          ...item,
+          key: String(item.id || item.key),
+          productCategoryId: String(item.productCategoryId || item.key),
+          name: item.productName ?? item.name,
+          image: firstImage,
+        };
+      })
+    );
+  };
+
+  const selectProductCategory = async (categoryId: string) => {
+    setSelectedProductCategoryId(categoryId);
+    await fetchProductsByCategoryId(categoryId);
+  };
 
   // === STATE STATUS ===
   const [shopId, setShopId] = useState<string | null>(null);
@@ -105,14 +132,17 @@ export function useStoreData() {
   const [error, setError] = useState<string | null>(null);
 
   // === STATE UI ===
-  const [activeTab, setActiveTab] = useState<StoreTabType>("Dịch Vụ");
+  const [activeTab, setActiveTab] = useState<StoreTabType>("Sản Phẩm");
   const [activeStatusFilter, setActiveStatusFilter] = useState<StoreStatusType>("all");
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<StoreItemData | null>(null);
+  const isFetchingRef = useRef(false);
 
   // === FETCH DATA ===
   const fetchData = async () => {
+    if (isFetchingRef.current) return; // prevent concurrent duplicate calls
+    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
     let currentShopId: string | null = shopId;
@@ -133,6 +163,10 @@ export function useStoreData() {
         if (ownedShop) {
           currentShopId = ownedShop.id;
           setShopId(currentShopId);
+          // Trả về để chờ vòng render tiếp theo gọi lại với shopId đã có, tránh gọi API 2 lần
+          isFetchingRef.current = false;
+          setIsLoading(false);
+          return;
         } else {
           message.warning("Người dùng hiện tại không sở hữu cửa hàng nào.");
           setIsLoading(false);
@@ -142,50 +176,81 @@ export function useStoreData() {
 
       if (!currentShopId) return;
 
-      // === FETCH PARALLEL ===
-      const categoriesResponse = await categoryService.getServiceCategory(currentShopId);
-      const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId); // ✅ Fetch Product Categories
-      const servicesResponse = await serviceService.getAllServices(currentShopId);
-      const productsResponse = await productService.getProducts(currentShopId);
-      const serviceDetailsResponse = await serviceDetailService.getServiceDetails(currentShopId);
+      // === FETCH THEO TAB ĐANG MỞ ===
+      if (activeTab === "Category Sản Phẩm") {
+        const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId);
+        setProductCategoryData(
+          (productCategoriesResponse?.items || []).map((item: any) => ({
+            ...item,
+            key: String(item.id || item.key),
+          }))
+        );
+        return;
+      }
 
-      // === UPDATE STATE SAFELY ===
-      setCategoryData(
-        (categoriesResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-        }))
-      );
+      if (activeTab === "Sản Phẩm") {
+        // Đảm bảo đã có danh mục sản phẩm để hiển thị autocomplete
+        let categories = productCategoryData;
+        if (!categories || categories.length === 0) {
+          const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId);
+          categories = (productCategoriesResponse?.items || []).map((item: any) => ({
+            ...item,
+            key: String(item.id || item.key),
+          }));
+          setProductCategoryData(categories);
+        }
 
-      setProductCategoryData(
-        (productCategoriesResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-        }))
-      ); // ✅ Update Product Categories State
+        let categoryId = selectedProductCategoryId;
+        if (!categoryId && categories.length > 0) {
+          categoryId = categories[0].key;
+          setSelectedProductCategoryId(categoryId);
+        }
 
-      setServiceData(
-        (servicesResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-          serviceCategoryId: String(item.serviceCategoryId || item.key),
-        }))
-      );
+        if (categoryId) {
+          await fetchProductsByCategoryId(categoryId);
+        } else {
+          setProductData([]);
+        }
 
-      setProductData(
-        (productsResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-          productCategoryId: String(item.productCategoryId || item.key),
-        }))
-      );
+        return;
+      }
 
-      setServiceDetailData(
-        (serviceDetailsResponse?.items || []).map((item: any) => ({
-          ...item,
-          key: String(item.id || item.key),
-        }))
-      );
+      if (activeTab === "Chi Tiết Sản Phẩm") {
+        // Tạm thời chưa có API riêng; không fetch gì thêm
+        return;
+      }
+
+      if (activeTab === "Dịch Vụ") {
+        const [categoriesResponse, servicesResponse] = await Promise.all([
+          categoryService.getServiceCategory(currentShopId),
+          serviceService.getAllServices(currentShopId),
+        ]);
+        setCategoryData(
+          (categoriesResponse?.items || []).map((item: any) => ({
+            ...item,
+            key: String(item.id || item.key),
+          }))
+        );
+        setServiceData(
+          (servicesResponse?.items || []).map((item: any) => ({
+            ...item,
+            key: String(item.id || item.key),
+            serviceCategoryId: String(item.serviceCategoryId || item.key),
+          }))
+        );
+        return;
+      }
+
+      if (activeTab === "Chi Tiết Dịch Vụ") {
+        const serviceDetailsResponse = await serviceDetailService.getServiceDetails(currentShopId);
+        setServiceDetailData(
+          (serviceDetailsResponse?.items || []).map((item: any) => ({
+            ...item,
+            key: String(item.id || item.key),
+          }))
+        );
+        return;
+      }
     } catch (err: any) {
       console.error("Lỗi API khi lấy dữ liệu:", err);
       setError(
@@ -194,13 +259,18 @@ export function useStoreData() {
         }`
       );
     } finally {
+      isFetchingRef.current = false;
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-  }, [shopId]);
+  }, [shopId, activeTab]);
+
+  // Đã loại bỏ prefetch để tránh gọi API lặp lại; sản phẩm danh mục sẽ được nạp khi cần trong fetchData
+
+  // Bỏ refetch theo selectedProductCategoryId để tránh gọi lặp; dùng selectProductCategory thay thế
 
   // === HÀM MỞ FORM MODAL ===
   const handleOpenFormModal = (item: StoreItemData | null) => {
@@ -298,7 +368,13 @@ const handleSave = async (values: any, type: ItemType) => {
       };
 
       if (editingItem) {
-        await productService.updateProduct(editingItem.key, payload); // ✅ Gọi updateProduct
+        // Map sang schema API PUT Products/{id}
+        await productService.updateProduct(editingItem.key, {
+          productName: values.name,
+          description: values.description || "",
+          status: values.status === "Hoạt động",
+          imgUrls: "[]", // có thể map từ upload sau
+        });
         message.success("Cập nhật sản phẩm thành công!");
       } else {
         await productService.createProduct(payload); // ✅ Gọi createProduct
@@ -417,6 +493,9 @@ return {
   isLoading,
   error,
   shopId, // ✅ Thêm dòng này
+  selectedProductCategoryId,
+  setSelectedProductCategoryId,
+  selectProductCategory,
 };
 
 }

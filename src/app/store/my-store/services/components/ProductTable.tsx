@@ -1,4 +1,4 @@
-import { Table, Button, Avatar, Tooltip, Popconfirm } from "antd"; 
+import { Table, Button, Avatar, Tooltip, Popconfirm, Spin } from "antd"; 
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import {
@@ -12,35 +12,38 @@ interface ProductTableProps {
   data: ProductData[];
   handleDelete: (key: string, type: "service" | "product") => void; 
   handleOpenFormModal: (item: ProductData | null) => void; 
+  isLoading?: boolean;
 }
 
 export default function ProductTable({
   data,
   handleDelete,
   handleOpenFormModal,
+  isLoading = false,
 }: ProductTableProps): JSX.Element {
   // Định nghĩa cột bên trong component để có thể sử dụng các hàm xử lý
   const productColumns: ColumnsType<ProductData> = [
     {
       title: "STT",
-      dataIndex: "key",
-      key: "key",
-      width: 50,
+      dataIndex: "__index",
+      key: "__index",
+      width: 60,
+      render: (_: any, __: ProductData, index: number) => index + 1,
     },
     {
       title: "Tên sản phẩm",
       dataIndex: "name",
       key: "name",
     },
-    {
-      title: "Số lượng trong kho",
-      dataIndex: "stock",
-      key: "stock",
-      width: 120,
-      render: (text: number) => (
-        <span className="font-semibold text-teal-600">{text}</span>
-      ),
-    },
+    // {
+    //   title: "Số lượng trong kho",
+    //   dataIndex: "stock",
+    //   key: "stock",
+    //   width: 120,
+    //   render: (text: number) => (
+    //     <span className="font-semibold text-teal-600">{text}</span>
+    //   ),
+    // },
     // Bỏ 'Giá', 'Giảm giá'
     {
       title: "Hình ảnh",
@@ -85,7 +88,7 @@ export default function ProductTable({
             onClick={() => handleOpenFormModal(record)} // Mở Modal Sửa
           />
           <Popconfirm
-            title={`Xác nhận xóa sản phẩm: ${record.name}`}
+            title={`Xác nhận xóa sản phẩm: ${record.name || (record as any).productName || ''}`}
             onConfirm={() => handleDelete(record.key, "product")}
             okText="Xóa"
             cancelText="Hủy"
@@ -103,13 +106,16 @@ export default function ProductTable({
   ];
 
   return (
-    <Table
-      columns={productColumns}
-      dataSource={data}
-      pagination={{ pageSize: 7, hideOnSinglePage: true }}
-      bordered
-      className="rounded-lg overflow-hidden"
-      scroll={{ x: 800 }} // Điều chỉnh scroll x phù hợp với số cột
-    />
+    <Spin spinning={isLoading} tip="Đang tải...">
+      <Table
+        columns={productColumns}
+        dataSource={data}
+        pagination={{ pageSize: 7, hideOnSinglePage: true }}
+        bordered
+        className="rounded-lg overflow-hidden"
+        scroll={{ x: 800 }} // Điều chỉnh scroll x phù hợp với số cột
+        loading={isLoading}
+      />
+    </Spin>
   );
 }
