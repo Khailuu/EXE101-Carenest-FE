@@ -4,6 +4,7 @@ import { EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { useState } from "react";
 import { JSX } from "react";
 import { ProductCategoryData, ItemType, useStoreData } from "../hooks/useStoreData";
+import { useQueryClient } from '@tanstack/react-query';
 import { productCategoryService } from "@/services/productCategoryService";
 import ProductCategoryFormModal from "./form/ProductCategoryFormModal";
 
@@ -15,7 +16,8 @@ interface ProductCategoryTableProps {
 }
 
 export default function ProductCategoryTable({ data, handleDelete, handleOpenFormModal, isLoading = false }: ProductCategoryTableProps): JSX.Element {
-  const { fetchData, shopId, activeTab } = useStoreData();
+  const { shopId, activeTab } = useStoreData();
+  const queryClient = useQueryClient();
   const [openModal, setOpenModal] = useState(false);
   const [editingItem, setEditingItem] = useState<ProductCategoryData | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,26 +61,8 @@ export default function ProductCategoryTable({ data, handleDelete, handleOpenFor
 
       handleCloseForm();
       
-      // Refetch data - if we're on the Category Sản Phẩm tab, fetchData will handle it
-      // Otherwise, directly refresh the category product data
-      if (activeTab === "Category Sản Phẩm") {
-        fetchData();
-      } else {
-        // Refetch directly if not on this tab
-        if (shopId) {
-          const response = await productCategoryService.getProductCategories(shopId);
-          // Trigger a re-render by calling fetchData which will load all tabs data
-          fetchData();
-        }
-      }
-
-      // Hard refresh the page so the user always sees the newest server data immediately
-      // This is intentional per request: refresh page after clicking "Lưu thay đổi"
-      setTimeout(() => {
-        if (typeof window !== "undefined") {
-          window.location.reload();
-        }
-      }, 300);
+      // Invalidate product categories so UI refreshes from React Query cache
+      queryClient.invalidateQueries({ queryKey: ["productCategories", shopId] });
     } catch (error) {
       console.error("Error saving product category:", error);
       message.error("Không thể lưu danh mục sản phẩm, vui lòng thử lại!");

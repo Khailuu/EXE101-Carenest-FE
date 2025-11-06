@@ -189,12 +189,7 @@ export default function ProductDetailTab() {
         console.log("🔄 Product details refetched");
       }
 
-      // Force a full page refresh to guarantee latest data from server (as requested)
-      setTimeout(() => {
-        if (typeof window !== "undefined") {
-          window.location.reload();
-        }
-      }, 300);
+      // No full reload: we already refetched details and updated local state above.
     } catch (error) {
       console.error("❌ Error updating:", error);
       message.error("Cập nhật thất bại");

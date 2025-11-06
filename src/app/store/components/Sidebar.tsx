@@ -82,58 +82,69 @@ export default function Sidebar() {
     <Sider
       width={280}
       breakpoint="lg"
-      collapsedWidth="0" 
+      collapsedWidth="0"
       className="z-10 shadow-xl"
       style={{
         background: "linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%)",
+        position: "sticky",
+        top: 0,
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      {/* Logo Section (GIỮ NGUYÊN UI) */}
-      <div className="p-6 text-left">
-        <div className="flex items-center mb-8">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-3">
-             <span className="text-teal-500 font-bold text-2xl">P</span>
-          </div>
+      {/* Scrollable area for logo + menu, keeps logout fixed at the bottom */}
+      <div className="flex-1 overflow-auto">
+        {/* Logo Section (GIỮ NGUYÊN UI) */}
+        <div className="p-6 text-left">
+          <div className="flex items-center mb-8">
+            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mr-3">
+              <span className="text-teal-500 font-bold text-2xl">P</span>
+            </div>
 
-          <div>
-            <span className="text-white font-bold text-2xl">
-              <span style={{ color: "#ff7043" }}>Care</span>
-              <span>Nest</span>
-            </span>
+            <div>
+              <span className="text-white font-bold text-2xl">
+                <span style={{ color: "#ff7043" }}>Care</span>
+                <span>Nest</span>
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Menu - THAY ĐỔI CÁCH XỬ LÝ CLICK */}
-      <Menu
-        mode="inline"
-        selectedKeys={[pathname]}
-        items={items.map(item => ({
+        {/* Menu - THAY ĐỔI CÁCH XỬ LÝ CLICK */}
+        <Menu
+          mode="inline"
+          selectedKeys={[pathname]}
+          items={items.map((item) => ({
             ...item,
             // Thêm onClick để gọi hàm điều hướng kèm loading
             onClick: () => handleMenuItemClick(item.key),
-        }))}
-        className="bg-transparent border-0 px-4"
-        style={{
-          backgroundColor: "transparent",
-          color: "white",
-          fontSize: "16px",
-          fontWeight: "bold",
-        }}
-        theme="dark" 
-      />
+          }))}
+          className="bg-transparent border-0 px-4"
+          style={{
+            backgroundColor: "transparent",
+            color: "white",
+            fontSize: "16px",
+            fontWeight: "bold",
+          }}
+          theme="dark"
+        />
+      </div>
 
-      {/* Logout Section */}
-      <div className="absolute bottom-8 left-0 right-0 px-6">
+      {/* Logout pinned flush to the bottom */}
+      <div
+        className="px-6 py-4"
+        style={{ position: "absolute", left: 0, right: 0, bottom: 0 }}
+      >
         <Button
-            type="primary"
-            icon={<LogoutOutlined className="text-xl" />}
-            size="large"
-            className="w-full text-lg font-semibold border-0 bg-transparent text-white shadow-none 
-                       hover:!bg-white hover:!bg-opacity-10 hover:!text-white"
-            onClick={handleLogout} // Đã thêm setLoading(true) trong hàm này
+          type="primary"
+          icon={<LogoutOutlined className="text-xl" />}
+          size="large"
+          className="w-full text-lg font-semibold border-0 bg-transparent text-white shadow-none hover:bg-white hover:bg-opacity-10 hover:text-white"
+          onClick={handleLogout}
         >
-            Đăng xuất
+          Đăng xuất
         </Button>
       </div>
     </Sider>

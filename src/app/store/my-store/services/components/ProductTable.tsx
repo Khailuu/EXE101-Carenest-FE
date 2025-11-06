@@ -49,15 +49,44 @@ export default function ProductTable({
       title: "Hình ảnh",
       dataIndex: "image",
       key: "image",
-      render: (url: string) => (
-        <Avatar
-          shape="square"
-          size="large"
-          src={url}
-          className="shadow-sm border border-gray-100"
-        />
-      ),
-      width: 80,
+      render: (_: any, record: any) => {
+        // record may contain `image` (mapped by hook) or raw `imgUrls` from API
+        const pickFirstImage = (img: any): string => {
+          if (!img) return "";
+          if (typeof img === "string") {
+            const s = img.trim();
+            if (!s) return "";
+            // If it's a JSON array string, parse and take the first item; otherwise treat as a direct URL
+            if (s.startsWith("[")) {
+              try {
+                const arr = JSON.parse(s);
+                return Array.isArray(arr) && arr.length > 0 ? String(arr[0]) : "";
+              } catch {
+                return s; // fallback to raw string
+              }
+            }
+            return s;
+          }
+          if (Array.isArray(img)) return String(img[0] || "");
+          return "";
+        };
+
+        const src = pickFirstImage(record.image ?? record.imgUrls ?? record.imgUrl ?? "");
+
+        return (
+          <div className="flex items-center justify-center">
+            <Avatar
+              shape="square"
+              size={48}
+              src={src || undefined}
+              className="shadow-sm border border-gray-100"
+            >
+              {!src && <span className="text-xs">No</span>}
+            </Avatar>
+          </div>
+        );
+      },
+      width: 96,
     },
     {
       title: "Mô tả",

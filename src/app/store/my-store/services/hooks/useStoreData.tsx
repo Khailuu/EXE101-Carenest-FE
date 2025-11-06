@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Tag, message } from "antd";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { JSX } from "react";
 
 // === IMPORT SERVICE ===
@@ -97,39 +98,88 @@ export function useStoreData() {
   const [productData, setProductData] = useState<ProductData[]>([]);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [productCategoryData, setProductCategoryData] = useState<ProductCategoryData[]>([]); // ✅ Thêm state mới
+  // React Query client for caching/invalidations
+  const queryClient = useQueryClient();
   const [serviceDetailData, setServiceDetailData] = useState<ServiceDetailData[]>([]);
   const [selectedProductCategoryId, setSelectedProductCategoryId] = useState<string | null>(null);
-  const fetchProductsByCategoryId = async (categoryId: string) => {
-    const productsResponse: any = await productService.getProductsByCategory(categoryId);
-    setProductData(
-      (productsResponse?.items || []).map((item: any) => {
-        let firstImage = "";
-        try {
-          const arr = typeof item.imgUrls === 'string' ? JSON.parse(item.imgUrls) : item.imgUrls;
-          firstImage = Array.isArray(arr) && arr.length > 0 ? String(arr[0]) : "";
-        } catch (_) {
-          firstImage = "";
-        }
-        return {
-          ...item,
-          key: String(item.id || item.key),
-          productCategoryId: String(item.productCategoryId || item.key),
-          name: item.productName ?? item.name,
-          image: firstImage,
-        };
-      })
-    );
-  };
+  // product queries are created after shopId is known (below)
 
   const selectProductCategory = async (categoryId: string) => {
+    // only set the selected category; productsQuery will automatically fetch for this category
     setSelectedProductCategoryId(categoryId);
-    await fetchProductsByCategoryId(categoryId);
   };
 
   // === STATE STATUS ===
   const [shopId, setShopId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // === React Query data hooks ===
+  const productCategoriesQuery = useQuery({
+    queryKey: ["productCategories", shopId],
+    queryFn: async () => {
+      if (!shopId) return [];
+      const res: any = await productCategoryService.getProductCategories(shopId);
+      return (res?.items || []).map((item: any) => ({ ...item, key: String(item.id || item.key) }));
+    },
+    enabled: !!shopId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const productsQuery = useQuery({
+    queryKey: ["products", shopId, selectedProductCategoryId],
+    queryFn: async () => {
+      if (!shopId || !selectedProductCategoryId) return [];
+      const productsResponse: any = await productService.getProductsByCategory(selectedProductCategoryId);
+
+      const pickFirstImage = (imgUrls: any): string => {
+        if (!imgUrls) return "";
+        if (typeof imgUrls === "string") {
+          const s = imgUrls.trim();
+          if (!s) return "";
+          if (s.startsWith("[")) {
+            try {
+              const arr = JSON.parse(s);
+              return Array.isArray(arr) && arr.length > 0 ? String(arr[0]) : "";
+            } catch {
+              return s;
+            }
+          }
+          return s;
+        }
+        if (Array.isArray(imgUrls)) return String(imgUrls[0] || "");
+        return "";
+      };
+
+      return (productsResponse?.items || []).map((item: any) => {
+        const firstImage = pickFirstImage(item.imgUrls);
+        return {
+          ...item,
+          key: String(item.id || item.key),
+          productCategoryId: String(item.productCategoryId || item.key),
+          name: item.productName ?? item.name,
+          image: firstImage,
+        } as ProductData;
+      });
+    },
+    enabled: !!shopId && !!selectedProductCategoryId,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Keep local state in sync with cached query results (so existing components can keep using the same props)
+  useEffect(() => {
+    if (productCategoriesQuery.data) {
+      setProductCategoryData(productCategoriesQuery.data as ProductCategoryData[]);
+    }
+  }, [productCategoriesQuery.data]);
+
+  useEffect(() => {
+    if (productsQuery.data) {
+      setProductData(productsQuery.data as ProductData[]);
+    } else if (!selectedProductCategoryId) {
+      setProductData([]);
+    }
+  }, [productsQuery.data, selectedProductCategoryId]);
 
   // === STATE UI ===
   const [activeTab, setActiveTab] = useState<StoreTabType>("Sản Phẩm");
@@ -163,7 +213,7 @@ export function useStoreData() {
         if (ownedShop) {
           currentShopId = ownedShop.id;
           setShopId(currentShopId);
-          // Trả về để chờ vòng render tiếp theo gọi lại với shopId đã có, tránh gọi API 2 lần
+          // Let React Query fetch product categories/products automatically once shopId is set
           isFetchingRef.current = false;
           setIsLoading(false);
           return;
@@ -174,83 +224,12 @@ export function useStoreData() {
         }
       }
 
-      if (!currentShopId) return;
-
-      // === FETCH THEO TAB ĐANG MỞ ===
-      if (activeTab === "Category Sản Phẩm") {
-        const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId);
-        setProductCategoryData(
-          (productCategoriesResponse?.items || []).map((item: any) => ({
-            ...item,
-            key: String(item.id || item.key),
-          }))
-        );
-        return;
-      }
-
-      if (activeTab === "Sản Phẩm") {
-        // Đảm bảo đã có danh mục sản phẩm để hiển thị autocomplete
-        let categories = productCategoryData;
-        if (!categories || categories.length === 0) {
-          const productCategoriesResponse = await productCategoryService.getProductCategories(currentShopId);
-          categories = (productCategoriesResponse?.items || []).map((item: any) => ({
-            ...item,
-            key: String(item.id || item.key),
-          }));
-          setProductCategoryData(categories);
-        }
-
-        let categoryId = selectedProductCategoryId;
-        if (!categoryId && categories.length > 0) {
-          categoryId = categories[0].key;
-          setSelectedProductCategoryId(categoryId);
-        }
-
-        if (categoryId) {
-          await fetchProductsByCategoryId(categoryId);
-        } else {
-          setProductData([]);
-        }
-
-        return;
-      }
-
-      if (activeTab === "Chi Tiết Sản Phẩm") {
-        // Tạm thời chưa có API riêng; không fetch gì thêm
-        return;
-      }
-
-      if (activeTab === "Dịch Vụ") {
-        const [categoriesResponse, servicesResponse] = await Promise.all([
-          categoryService.getServiceCategory(currentShopId),
-          serviceService.getAllServices(currentShopId),
-        ]);
-        setCategoryData(
-          (((categoriesResponse as any)?.items) || ((categoriesResponse as any)?.data?.data?.items) || []).map((item: any) => ({
-            ...item,
-            key: String(item.id || item.key),
-          }))
-        );
-        setServiceData(
-          (((servicesResponse as any)?.items) || ((servicesResponse as any)?.data?.data?.items) || []).map((item: any) => ({
-            ...item,
-            key: String(item.id || item.key),
-            serviceCategoryId: String(item.serviceCategoryId || item.key),
-          }))
-        );
-        return;
-      }
-
-      if (activeTab === "Chi Tiết Dịch Vụ") {
-        const serviceDetailsResponse = await serviceDetailService.getServiceDetails(currentShopId);
-        setServiceDetailData(
-          (serviceDetailsResponse?.items || []).map((item: any) => ({
-            ...item,
-            key: String(item.id || item.key),
-          }))
-        );
-        return;
-      }
+      // For other tabs we rely on React Query to keep cached data and avoid duplicate calls.
+      // Invalidate queries related to tabs if caller explicitly wants fresh data.
+  queryClient.invalidateQueries({ queryKey: ["productCategories"] });
+  queryClient.invalidateQueries({ queryKey: ["products"] });
+  queryClient.invalidateQueries({ queryKey: ["services"] });
+  queryClient.invalidateQueries({ queryKey: ["serviceDetails"] });
     } catch (err: any) {
       console.error("Lỗi API khi lấy dữ liệu:", err);
       setError(
@@ -330,7 +309,9 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+  // Invalidate related queries so React Query will refresh cached data
+  queryClient.invalidateQueries({ queryKey: ["productCategories", shopId] });
+  queryClient.invalidateQueries({ queryKey: ["products", shopId] });
       return;
     }
 
@@ -351,7 +332,9 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+  // Invalidate product categories cache
+  queryClient.invalidateQueries({ queryKey: ["productCategories", shopId] });
+  queryClient.invalidateQueries({ queryKey: ["products", shopId] });
       return;
     }
 
@@ -376,7 +359,7 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+  queryClient.invalidateQueries({ queryKey: ["services", shopId] });
       return;
     }
 
@@ -415,7 +398,9 @@ const handleSave = async (values: any, type: ItemType) => {
 
       setIsFormModalOpen(false);
       setEditingItem(null);
-      fetchData();
+  // Invalidate products for current shop/category
+  queryClient.invalidateQueries({ queryKey: ["products", shopId] });
+  queryClient.invalidateQueries({ queryKey: ["productCategories", shopId] });
       return;
     }
   } catch (err: any) {
@@ -431,19 +416,19 @@ const handleSave = async (values: any, type: ItemType) => {
       if (type === "service") {
         await serviceService.deleteService(key);
         message.success("Đã xóa dịch vụ!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        queryClient.invalidateQueries({ queryKey: ["services", shopId] });
       } else if (type === "product") {
         await productService.deleteProduct(key); // ✅ Gọi deleteProduct
         message.success("Đã xóa sản phẩm!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        queryClient.invalidateQueries({ queryKey: ["products", shopId] });
       } else if (type === "category") {
         await categoryService.deleteServiceCategory(key); // ✅ Gọi deleteServiceCategory
         message.success("Đã xóa danh mục!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        queryClient.invalidateQueries({ queryKey: ["categories", shopId] });
       } else if (type === "product-category") {
         await productCategoryService.deleteProductCategory(key); // ✅ Gọi deleteProductCategory
         message.success("Đã xóa danh mục sản phẩm!");
-        fetchData(); // Gọi fetchData để cập nhật dữ liệu
+        queryClient.invalidateQueries({ queryKey: ["productCategories", shopId] });
       } else if (type === "service-detail") {
         // TODO: Implement deleteServiceDetail
         message.warning("Chức năng xóa chi tiết dịch vụ chưa được triển khai!");
