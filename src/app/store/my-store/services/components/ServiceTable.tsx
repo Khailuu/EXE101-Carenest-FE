@@ -18,6 +18,7 @@ import {
   ServiceData,
   renderStatusTag,
   useStoreData,
+  ItemType,
 } from "../hooks/useStoreData";
 import { categoryService } from "@/services/categoryService";
 import { serviceService } from "@/services/serviceService";
@@ -26,16 +27,16 @@ import { JSX } from "react";
 interface ServiceTableProps {
   data: ServiceData[];
   categoryData: any[];
-  handleDelete: (key: string, type: ItemType) => Promise<void>;
-  handleOpenFormModal: (item: ServiceData | null) => void;
+  handleDeleteAction: (key: string, type: ItemType) => Promise<void>;
+  handleOpenFormModalAction: (item: ServiceData | null) => void;
   isLoading: boolean;
 }
 
 export default function ServiceTable({
   data,
   categoryData,
-  handleDelete,
-  handleOpenFormModal,
+  handleDeleteAction,
+  handleOpenFormModalAction,
   isLoading,
 }: ServiceTableProps): JSX.Element {
   const {
@@ -52,8 +53,8 @@ export default function ServiceTable({
     const fetchCategories = async () => {
       if (!shopId) return;
       try {
-        const res = await categoryService.getServiceCategory(shopId);
-        const categoryItems = res.items || [];
+  const res = await categoryService.getServiceCategory(shopId);
+  const categoryItems = (res as any)?.items || (res as any)?.data?.data?.items || [];
         setCategories(categoryItems);
         if (categoryItems.length > 0) {
           setSelectedCategoryId(categoryItems[0].id);
@@ -103,7 +104,7 @@ export default function ServiceTable({
           <Button
             type="text"
             icon={<EditOutlined className="text-blue-500" />}
-            onClick={() => handleOpenFormModal(record)}
+            onClick={() => handleOpenFormModalAction(record)}
           />
           <Popconfirm
             title={`Xóa ${record.name}?`}

@@ -4,15 +4,15 @@ import { ProductCategoryData } from "../../hooks/useStoreData";
 
 interface ProductCategoryFormModalProps {
   open: boolean;
-  onCancel: () => void;
-  onSubmit: (values: any) => void;
+  onCancelAction: () => void;
+  onSubmitAction: (values: any) => void;
   editingItem?: ProductCategoryData | null;
 }
 
 export default function ProductCategoryFormModal({
   open,
-  onCancel,
-  onSubmit,
+  onCancelAction,
+  onSubmitAction,
   editingItem,
 }: ProductCategoryFormModalProps): JSX.Element {
   const [form] = Form.useForm();
@@ -30,10 +30,10 @@ export default function ProductCategoryFormModal({
       open={open}
       onCancel={() => {
         form.resetFields();
-        onCancel();
+        onCancelAction();
       }}
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onClick={onCancelAction}>
           Hủy
         </Button>,
         <Button key="submit" type="primary" onClick={() => form.submit()}>
@@ -42,7 +42,7 @@ export default function ProductCategoryFormModal({
       ]}
       centered
     >
-      <Form form={form} layout="vertical" onFinish={onSubmit}>
+      <Form form={form} layout="vertical" onFinish={onSubmitAction}>
         <Form.Item
           name="name"
           label="Tên Danh mục Sản phẩm"

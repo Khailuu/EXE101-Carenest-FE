@@ -10,11 +10,11 @@ import CategoryFormModal from "./CategoryFormModal";
 
 interface CategoryTableProps {
   data: CategoryData[];
-  handleDelete: (key: string, type: ItemType) => Promise<void>;
-  handleOpenFormModal: (item: CategoryData | null) => void;
+  handleDeleteAction: (key: string, type: ItemType) => Promise<void>;
+  handleOpenFormModalAction: (item: CategoryData | null) => void;
 }
 
-export default function CategoryTable({ data, handleDelete, handleOpenFormModal }: CategoryTableProps): JSX.Element {
+export default function CategoryTable({ data, handleDeleteAction, handleOpenFormModalAction }: CategoryTableProps): JSX.Element {
   const { fetchData } = useStoreData();
   const [openModal, setOpenModal] = useState(false);
   const [editingItem, setEditingItem] = useState<CategoryData | null>(null);
@@ -87,7 +87,7 @@ export default function CategoryTable({ data, handleDelete, handleOpenFormModal 
             okText="Xóa"
             cancelText="Hủy"
             okButtonProps={{ danger: true }}
-            onConfirm={() => handleDelete(record.key, "category")}
+            onConfirm={() => handleDeleteAction(record.key, "category")}
           >
             <Button
               type="text"
@@ -117,8 +117,8 @@ export default function CategoryTable({ data, handleDelete, handleOpenFormModal 
 
       <CategoryFormModal
         open={openModal}
-        onCancel={handleCloseForm}
-        onSubmit={handleSubmit}
+        onCancelAction={handleCloseForm}
+        onSubmitAction={handleSubmit}
         editingItem={editingItem}
       />
     </>

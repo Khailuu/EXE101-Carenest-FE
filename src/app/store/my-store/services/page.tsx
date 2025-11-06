@@ -58,7 +58,7 @@ export default function StoreServicePage(): JSX.Element {
       const fetchServices = async () => {
         try {
           const response = await serviceService.getAllServices(shopId);
-          const options = (response.data?.items || []).map((service: ServiceApiData) => ({
+          const options = ((response as any)?.items || []).map((service: any) => ({
             value: service.id,
             label: service.name,
           }));
@@ -86,8 +86,8 @@ export default function StoreServicePage(): JSX.Element {
         return (
           <CategoryTable
             data={filteredCategoryData}
-            handleDelete={handleDelete as any}
-            handleOpenFormModal={openModal as any}
+            handleDeleteAction={handleDelete as any}
+            handleOpenFormModalAction={openModal as any}
           />
         );
       case "Category Sản Phẩm":
@@ -104,8 +104,8 @@ export default function StoreServicePage(): JSX.Element {
           <ServiceTable
             data={filteredServiceData}
             categoryData={categoryData} 
-            handleDelete={handleDelete}
-            handleOpenFormModal={openModal as any}
+            handleDeleteAction={handleDelete}
+            handleOpenFormModalAction={openModal as any}
             isLoading={isLoading}
           />
         );
@@ -172,15 +172,16 @@ export default function StoreServicePage(): JSX.Element {
         <ServiceProductTabs activeTab={activeTab} setActiveTab={setActiveTab} />
         <StoreFilters
           isAdvancedSearchOpen={isAdvancedSearchOpen}
-          setIsAdvancedSearchOpen={setIsAdvancedSearchOpen}
+          setIsAdvancedSearchOpenAction={setIsAdvancedSearchOpen}
           activeStatusFilter={activeStatusFilter}
-          setActiveStatusFilter={setActiveStatusFilter}
+          setActiveStatusFilterAction={setActiveStatusFilter}
           isFormModalOpen={isFormModalOpen}
-          setIsFormModalOpen={setIsFormModalOpen}
+          setIsFormModalOpenAction={setIsFormModalOpen}
           editingItem={editingItem}
           activeTab={activeTab as StoreFiltersActiveTabType}
-          handleSave={handleSave as (values: any, type: string) => Promise<void>}
+          handleSaveAction={handleSave as (values: any, type: string) => Promise<void>}
           categoryData={categoryData}
+          productCategoryData={productCategoryData}
         />
         <Card bordered={false} className="shadow-lg rounded-xl">
           {renderActiveTable()}

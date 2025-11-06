@@ -6,16 +6,16 @@ import { CategoryData } from "../../hooks/useStoreData";
 
 interface ServiceFormModalProps {
   open: boolean;
-  onCancel: () => void;
-  onSubmit: (values: any) => void;
+  onCancelAction: () => void;
+  onSubmitAction: (values: any) => void;
   editingItem?: any | null;
   categoryData: CategoryData[];
 }
 
 export default function ServiceFormModal({
   open,
-  onCancel,
-  onSubmit,
+  onCancelAction,
+  onSubmitAction,
   editingItem,
   categoryData,
 }: ServiceFormModalProps): JSX.Element {
@@ -34,10 +34,10 @@ export default function ServiceFormModal({
       open={open}
       onCancel={() => {
         form.resetFields();
-        onCancel();
+        onCancelAction();
       }}
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onClick={onCancelAction}>
           Hủy
         </Button>,
         <Button key="submit" type="primary" onClick={() => form.submit()}>
@@ -46,7 +46,7 @@ export default function ServiceFormModal({
       ]}
       centered
     >
-      <Form form={form} layout="vertical" onFinish={onSubmit}>
+  <Form form={form} layout="vertical" onFinish={onSubmitAction}>
         <Form.Item
           name="name"
           label="Tên Dịch vụ"

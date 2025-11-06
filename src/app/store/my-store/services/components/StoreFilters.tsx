@@ -2,48 +2,69 @@
 import { Button, Input, Select, Card, Row, Col } from "antd";
 import { SearchOutlined, PlusOutlined } from "@ant-design/icons";
 import { JSX, useState } from "react";
-import { CategoryData, StoreTabType, ItemType } from "../hooks/useStoreData";
+import { CategoryData, StoreTabType, ItemType, ProductCategoryData, useStoreData } from "../hooks/useStoreData";
 
 import CategoryFormModal from "./form/CategoryFormModal";
 import ServiceFormModal from "./form/ServiceFormModal";
 import ProductFormModal from "./form/ProductFormModal";
+import ProductCategoryFormModal from "./form/ProductCategoryFormModal";
+import ProductDetailFormModal from "./form/ProductDetailFormModal";
+import { productDetailService } from "@/services/productDetailService";
 
 interface StoreFiltersProps {
   activeTab: StoreTabType;
   categoryData: CategoryData[];
-  handleSave: (values: any, type: ItemType) => Promise<void>;
+  productCategoryData?: ProductCategoryData[];
+  handleSaveAction: (values: any, type: ItemType) => Promise<void>;
   isAdvancedSearchOpen: boolean;
-  setIsAdvancedSearchOpen: (isOpen: boolean) => void;
+  setIsAdvancedSearchOpenAction: (isOpen: boolean) => void;
   activeStatusFilter: "all" | "Hoạt động" | "Ngưng hoạt động";
-  setActiveStatusFilter: (status: "all" | "Hoạt động" | "Ngưng hoạt động") => void;
+  setActiveStatusFilterAction: (status: "all" | "Hoạt động" | "Ngưng hoạt động") => void;
   isFormModalOpen: boolean;
-  setIsFormModalOpen: (isOpen: boolean) => void;
+  setIsFormModalOpenAction: (isOpen: boolean) => void;
   editingItem: any;
 }
 
 export default function StoreFilters({
   activeTab,
   categoryData,
-  handleSave,
+  productCategoryData = [],
+  handleSaveAction,
   isAdvancedSearchOpen,
-  setIsAdvancedSearchOpen,
+  setIsAdvancedSearchOpenAction,
   activeStatusFilter,
-  setActiveStatusFilter,
+  setActiveStatusFilterAction,
   isFormModalOpen,
-  setIsFormModalOpen,
+  setIsFormModalOpenAction,
   editingItem,
 }: StoreFiltersProps): JSX.Element {
+  const { fetchData } = useStoreData();
 
   const handleSubmit = async (values: any) => {
     if (activeTab === "Category") {
       values.shopId = "SHOP_ID_CUA_BAN";
-      await handleSave(values, "category");
+      await handleSaveAction(values, "category");
     } else if (activeTab === "Dịch Vụ") {
-      await handleSave(values, "service");
+      await handleSaveAction(values, "service");
     } else if (activeTab === "Sản Phẩm") {
-      await handleSave(values, "product");
+      await handleSaveAction(values, "product");
+    } else if (activeTab === "Category Sản Phẩm") {
+      await handleSaveAction(values, "product-category");
+    } else if (activeTab === "Chi Tiết Sản Phẩm") {
+      // values should contain productId and detail fields from the modal
+      await productDetailService.createProductDetail(values.productId, {
+        name: values.name,
+        price: Number(values.price),
+        status: Boolean(values.status),
+        discount: Number(values.discount || 0),
+        isDefault: Boolean(values.isDefault),
+        imgUrls: values.imgUrls || "",
+        quantityInStock: Number(values.quantityInStock || 0),
+      });
+      // Refetch data after creating product detail
+      fetchData();
     }
-    setIsFormModalOpen(false);
+    setIsFormModalOpenAction(false);
   };
 
   return (
@@ -74,20 +95,20 @@ export default function StoreFilters({
             size="large"
             icon={<PlusOutlined />}
             className="bg-green-500!"
-            onClick={() => setIsFormModalOpen(true)}
+            onClick={() => setIsFormModalOpenAction(true)}
           />
         </Col>
       </Row>
 
       {activeTab === "Category" && (
-        <CategoryFormModal open={isFormModalOpen} onCancel={() => setIsFormModalOpen(false)} onSubmit={handleSubmit} />
+        <CategoryFormModal open={isFormModalOpen} onCancelAction={() => setIsFormModalOpenAction(false)} onSubmitAction={handleSubmit} />
       )}
 
       {activeTab === "Dịch Vụ" && (
         <ServiceFormModal
           open={isFormModalOpen}
-          onCancel={() => setIsFormModalOpen(false)}
-          onSubmit={handleSubmit}
+          onCancelAction={() => setIsFormModalOpenAction(false)}
+          onSubmitAction={handleSubmit}
           categoryData={categoryData}
         />
       )}
@@ -95,9 +116,26 @@ export default function StoreFilters({
       {activeTab === "Sản Phẩm" && (
         <ProductFormModal
           open={isFormModalOpen}
-          onCancel={() => setIsFormModalOpen(false)}
-          onSubmit={handleSubmit}
-          categoryData={categoryData}
+          onCancelAction={() => setIsFormModalOpenAction(false)}
+          onSubmitAction={handleSubmit}
+          editingItem={editingItem}
+          categoryData={productCategoryData}
+        />
+      )}
+
+      {activeTab === "Category Sản Phẩm" && (
+        <ProductCategoryFormModal
+          open={isFormModalOpen}
+          onCancelAction={() => setIsFormModalOpenAction(false)}
+          onSubmitAction={handleSubmit}
+        />
+      )}
+
+      {activeTab === "Chi Tiết Sản Phẩm" && (
+        <ProductDetailFormModal
+          open={isFormModalOpen}
+          onCancelAction={() => setIsFormModalOpenAction(false)}
+          onSuccessAction={() => {}}
         />
       )}
     </Card>

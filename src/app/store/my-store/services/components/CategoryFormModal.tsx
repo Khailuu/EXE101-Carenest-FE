@@ -6,15 +6,15 @@ import { CategoryData } from "../hooks/useStoreData";
 
 interface CategoryFormModalProps {
   open: boolean;
-  onCancel: () => void;
-  onSubmit: (values: any) => void;
+  onCancelAction: () => void;
+  onSubmitAction: (values: any) => void;
   editingItem?: CategoryData | null;
 }
 
 export default function CategoryFormModal({
   open,
-  onCancel,
-  onSubmit,
+  onCancelAction,
+  onSubmitAction,
   editingItem,
 }: CategoryFormModalProps): JSX.Element {
   const [form] = Form.useForm();
@@ -28,11 +28,11 @@ export default function CategoryFormModal({
 
   const handleCancel = () => {
     form.resetFields();
-    onCancel();
+    onCancelAction();
   };
 
   const handleFinish = (values: any) => {
-    onSubmit(values);
+    onSubmitAction(values);
   };
 
   return (

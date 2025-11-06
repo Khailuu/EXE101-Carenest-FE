@@ -100,7 +100,7 @@ export function useStoreData() {
   const [serviceDetailData, setServiceDetailData] = useState<ServiceDetailData[]>([]);
   const [selectedProductCategoryId, setSelectedProductCategoryId] = useState<string | null>(null);
   const fetchProductsByCategoryId = async (categoryId: string) => {
-    const productsResponse = await productService.getProductsByCategory(categoryId);
+    const productsResponse: any = await productService.getProductsByCategory(categoryId);
     setProductData(
       (productsResponse?.items || []).map((item: any) => {
         let firstImage = "";
@@ -226,13 +226,13 @@ export function useStoreData() {
           serviceService.getAllServices(currentShopId),
         ]);
         setCategoryData(
-          (categoriesResponse?.items || []).map((item: any) => ({
+          (((categoriesResponse as any)?.items) || ((categoriesResponse as any)?.data?.data?.items) || []).map((item: any) => ({
             ...item,
             key: String(item.id || item.key),
           }))
         );
         setServiceData(
-          (servicesResponse?.items || []).map((item: any) => ({
+          (((servicesResponse as any)?.items) || ((servicesResponse as any)?.data?.data?.items) || []).map((item: any) => ({
             ...item,
             key: String(item.id || item.key),
             serviceCategoryId: String(item.serviceCategoryId || item.key),
@@ -273,7 +273,34 @@ export function useStoreData() {
   // Bỏ refetch theo selectedProductCategoryId để tránh gọi lặp; dùng selectProductCategory thay thế
 
   // === HÀM MỞ FORM MODAL ===
-  const handleOpenFormModal = (item: StoreItemData | null) => {
+  const handleOpenFormModal = async (item: StoreItemData | null) => {
+    // When editing a product, fetch full data from server to ensure modal has all fields
+    if (item && activeTab === "Sản Phẩm") {
+      try {
+        const full = await productService.getProductById(String((item as any).key));
+        let firstImage = "";
+        try {
+          const arr = typeof full.imgUrls === 'string' ? JSON.parse(full.imgUrls) : full.imgUrls;
+          firstImage = Array.isArray(arr) && arr.length > 0 ? String(arr[0]) : "";
+        } catch (_) {
+          firstImage = "";
+        }
+        const mapped: ProductData = {
+          key: String(full.id),
+          name: full.productName ?? full.name,
+          stock: Number(full.stock ?? 0),
+          image: firstImage,
+          description: full.description ?? "",
+          status: full.status ? "Hoạt động" : "Ngưng hoạt động",
+          productCategoryId: String(full.productCategoryId ?? (item as any).productCategoryId ?? ""),
+        };
+        setEditingItem(mapped);
+        setIsFormModalOpen(true);
+        return;
+      } catch (e) {
+        console.warn("Không thể tải đầy đủ dữ liệu sản phẩm, dùng dữ liệu hiện có.", e);
+      }
+    }
     setEditingItem(item);
     setIsFormModalOpen(true);
   };
@@ -355,29 +382,34 @@ const handleSave = async (values: any, type: ItemType) => {
 
     // === PRODUCT ===
     if (type === "product") {
+      // Extract file from upload field - can be array, single object, or null
+      let imageFile: File | null = null;
+      if (values.image) {
+        if (Array.isArray(values.image)) {
+          imageFile = values.image[0]?.originFileObj || null;
+        } else if (values.image?.originFileObj) {
+          imageFile = values.image.originFileObj;
+        }
+      }
+
       const payload = {
-        name: values.name,
-        stock: values.stock,
-        price: values.price, // Thêm price
-        discount: values.discount, // Thêm discount
+        productName: values.productName,
         description: values.description || "",
-        shopId,
-        status: values.status === "Hoạt động",
+        status: Boolean(values.status),
         productCategoryId: values.productCategoryId,
-        imageFile: values.image?.[0]?.originFileObj || null, // Thêm imageFile
+        imageFile: imageFile,
       };
 
       if (editingItem) {
-        // Map sang schema API PUT Products/{id}
         await productService.updateProduct(editingItem.key, {
-          productName: values.name,
+          productName: values.productName,
           description: values.description || "",
-          status: values.status === "Hoạt động",
-          imgUrls: "[]", // có thể map từ upload sau
+          status: Boolean(values.status),
+          imgUrls: "[]",
         });
         message.success("Cập nhật sản phẩm thành công!");
       } else {
-        await productService.createProduct(payload); // ✅ Gọi createProduct
+        await productService.createProduct(payload);
         message.success("Thêm sản phẩm thành công!");
       }
 

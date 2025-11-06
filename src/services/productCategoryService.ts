@@ -1,12 +1,11 @@
 import { apiInstance } from '@/constants/api';
 
-const PRODUCT_CATEGORY_BASE_URL = process.env.NEXT_PUBLIC_MANAGE_CATEGORY_PRODUCT_URL || 'https://persistent-nissy-nghi-dna-ac3fa53e.koyeb.app/api/';
+const PRODUCT_CATEGORY_BASE_URL = process.env.NEXT_PUBLIC_MANAGE_CATEGORY_PRODUCT_URL || 
+  'https://persistent-nissy-nghi-dna-ac3fa53e.koyeb.app/api/ProductCategories';
 const productCategoryApi = apiInstance.create({ baseURL: PRODUCT_CATEGORY_BASE_URL });
 
-// Nếu baseURL đã kết thúc bằng "/ProductCategories" thì không cần thêm lại lần nữa
-const PRODUCT_CATEGORIES_PATH = /\/ProductCategories\/?$/i.test(
-    (PRODUCT_CATEGORY_BASE_URL || '').replace(/\s+/g, '')
-) ? '' : 'ProductCategories';
+// No need for path suffix since baseURL already includes /ProductCategories
+const PRODUCT_CATEGORIES_PATH = '';
 
 export interface ProductCategoryApiData {
     id: string;
@@ -44,7 +43,7 @@ export const productCategoryService = {
         const sortDirection = "asc";
 
         try {
-            const response = await productCategoryApi.get(BASE_PRODUCT_CATEGORY_API_URL, {
+            const response = await productCategoryApi.get("/", {
                 params: { pageIndex, pageSize, sortDirection, shopId }
             });
 
@@ -56,7 +55,7 @@ export const productCategoryService = {
 
     createProductCategory: async (data: CreateProductCategoryRequest): Promise<ProductCategoryApiData> => {
         try {
-            const response = await productCategoryApi.post(`${BASE_PRODUCT_CATEGORY_API_URL}/shops/${data.shopId}`, {
+            const response = await productCategoryApi.post(`/shops/${data.shopId}`, {
                 name: data.name
             });
 
@@ -68,7 +67,7 @@ export const productCategoryService = {
 
     updateProductCategory: async (categoryId: string, data: UpdateProductCategoryRequest): Promise<ProductCategoryApiData> => {
         try {
-            const response = await productCategoryApi.put(`${BASE_PRODUCT_CATEGORY_API_URL}/${categoryId}`, {
+            const response = await productCategoryApi.put(`/${categoryId}`, {
                 name: data.name
             });
 
@@ -80,7 +79,7 @@ export const productCategoryService = {
 
     deleteProductCategory: async (categoryId: string): Promise<void> => {
         try {
-            const response = await productCategoryApi.delete(`${BASE_PRODUCT_CATEGORY_API_URL}/${categoryId}`);
+            const response = await productCategoryApi.delete(`/${categoryId}`);
 
             // No return data for delete
         } catch (error) {

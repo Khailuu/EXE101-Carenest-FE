@@ -1,21 +1,21 @@
 "use client";
-import { Modal, Form, Input, Button, Select, InputNumber, Upload } from "antd";
+import { Modal, Form, Input, Button, Select, Upload, Switch } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { JSX, useEffect } from "react";
-import { CategoryData, ProductData } from "../../hooks/useStoreData";
+import { ProductData, ProductCategoryData } from "../../hooks/useStoreData";
 
 interface ProductFormModalProps {
   open: boolean;
-  onCancel: () => void;
-  onSubmit: (values: any) => void;
+  onCancelAction: () => void;
+  onSubmitAction: (values: any) => void;
   editingItem?: ProductData | null;
-  categoryData: CategoryData[];
+  categoryData: ProductCategoryData[];
 }
 
 export default function ProductFormModal({
   open,
-  onCancel,
-  onSubmit,
+  onCancelAction,
+  onSubmitAction,
   editingItem,
   categoryData,
 }: ProductFormModalProps): JSX.Element {
@@ -25,14 +25,19 @@ export default function ProductFormModal({
   useEffect(() => {
     if (open) {
       if (isEditing && editingItem) {
+        // Map ProductData -> form fields
         form.setFieldsValue({
-          ...editingItem,
-          image: editingItem.image ? [{ uid: '-1', name: 'image.png', status: 'done', url: editingItem.image }] : [],
-          status: editingItem.status === "Hoạt động" ? "Hoạt động" : "Ngưng hoạt động",
+          productName: editingItem.name,
+          productCategoryId: editingItem.productCategoryId,
+          description: editingItem.description,
+          status: editingItem.status === "Hoạt động",
+          image: editingItem.image
+            ? [{ uid: "-1", name: "current-image", status: "done", url: editingItem.image }]
+            : [],
         });
       } else {
         form.resetFields();
-        form.setFieldsValue({ status: "Hoạt động" });
+        form.setFieldsValue({ status: true, image: [] });
       }
     }
   }, [open, editingItem, form, isEditing]);
@@ -43,10 +48,10 @@ export default function ProductFormModal({
       open={open}
       onCancel={() => {
         form.resetFields();
-        onCancel();
+        onCancelAction();
       }}
       footer={[
-        <Button key="cancel" onClick={onCancel}>
+        <Button key="cancel" onClick={onCancelAction}>
           Hủy
         </Button>,
         <Button key="submit" type="primary" onClick={() => form.submit()}>
@@ -55,9 +60,9 @@ export default function ProductFormModal({
       ]}
       centered
     >
-      <Form form={form} layout="vertical" onFinish={onSubmit}>
+      <Form form={form} layout="vertical" onFinish={onSubmitAction}>
         <Form.Item
-          name="name"
+          name="productName"
           label="Tên Sản phẩm"
           rules={[{ required: true, message: "Vui lòng nhập tên sản phẩm" }]}
         >
@@ -78,43 +83,23 @@ export default function ProductFormModal({
           </Select>
         </Form.Item>
 
-        <Form.Item name="stock" label="Số lượng trong kho" rules={[{ required: true, message: "Vui lòng nhập số lượng" }]}>
-          <InputNumber min={0} className="w-full" />
-        </Form.Item>
-
-        <Form.Item name="price" label="Giá" rules={[{ required: true, message: "Vui lòng nhập giá" }]}>
-          <InputNumber min={0} className="w-full" formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-          parser={(value) => value!.replace(/\s?|(,*)/g, '')}
-          />
-        </Form.Item>
-
-        <Form.Item name="discount" label="Giảm giá (%)" rules={[{ required: true, message: "Vui lòng nhập giảm giá" }]}>
-          <InputNumber min={0} max={100} className="w-full" />
-        </Form.Item>
+        {/* Product create API doesn't accept stock/price/discount here; moved to Product Detail */}
 
         <Form.Item name="description" label="Mô tả">
           <Input.TextArea rows={3} />
         </Form.Item>
 
-        <Form.Item
-          name="status"
-          label="Trạng thái"
-          rules={[{ required: true, message: "Vui lòng chọn trạng thái" }]}
-        >
-          <Select placeholder="Chọn trạng thái">
-            <Select.Option value="Hoạt động">Hoạt động</Select.Option>
-            <Select.Option value="Ngưng hoạt động">Ngưng hoạt động</Select.Option>
-          </Select>
+        <Form.Item name="status" label="Trạng thái" valuePropName="checked" initialValue={true}>
+          <Switch checkedChildren="Hoạt động" unCheckedChildren="Ẩn" />
         </Form.Item>
 
-        <Form.Item name="image" label="Hình ảnh">
-          <Upload
-            listType="picture"
-            beforeUpload={() => false}
-            maxCount={1}
-            fileList={form.getFieldValue('image') ? [form.getFieldValue('image')] : []}
-            onChange={({ fileList }) => form.setFieldsValue({ image: fileList[0] || null })}
-          >
+        <Form.Item
+          name="image"
+          label="Hình ảnh"
+          valuePropName="fileList"
+          getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
+        >
+          <Upload listType="picture" beforeUpload={() => false} maxCount={1}>
             <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
           </Upload>
         </Form.Item>
