@@ -2,7 +2,8 @@ import axios, {AxiosInstance, InternalAxiosRequestConfig, CreateAxiosDefaults } 
 
 // Lấy base URL cho API quản lý cửa hàng (cần được định nghĩa trong .env.local)
 export const MANAGE_SHOPS_API = process.env.NEXT_PUBLIC_MANAGE_SHOPS_API;
-const GATEWAY_BASE_URL = 'https://gateway.devnest.io.vn';
+const GATEWAY_BASE_URL = 'https://enormous-terrie-nghi-dna-dddc2780.koyeb.app/api';
+const GATEWAY_BASE_URL_1 = 'https://carenestauthorize-production.up.railway.app/api';
 
 // 1. Instance chung cho các API có yêu cầu Bearer Token (Đã đăng nhập)
 export const apiInstance = {
@@ -33,10 +34,49 @@ export const apiInstance = {
 export const shopsApi: AxiosInstance = axios.create({
   baseURL: GATEWAY_BASE_URL, 
 });
-
-export const authApi: AxiosInstance = axios.create({
-    baseURL: "https://carenestauthorize-production.up.railway.app/api",
+export const shopsApi1: AxiosInstance = axios.create({
+  baseURL: GATEWAY_BASE_URL, 
 });
+
+// Auth service API roots (prefer env, fallback to production)
+const AUTH_ROOT = process.env.NEXT_PUBLIC_AUTH_API ?? "https://carenestauthorize-production.up.railway.app";
+const AUTH_API = `${AUTH_ROOT}/api/auth`;
+const API_ROOT = `${AUTH_ROOT}/api`;
+
+// Public auth endpoints (/api/auth/...)
+export const authApi: AxiosInstance = axios.create({ baseURL: AUTH_API });
+
+// Secured auth endpoints (/api/auth/...) that need Bearer token
+export const authApiSecured: AxiosInstance = axios.create({ baseURL: AUTH_API });
+authApiSecured.interceptors.request.use(
+    (config) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : '';
+        if (token) {
+            config.headers = {
+                ...(config.headers || {}),
+                Authorization: `Bearer ${token}`,
+            } as any;
+        }
+        return config as InternalAxiosRequestConfig;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Secured general API root (/api/...) for admin endpoints
+export const apiSecured: AxiosInstance = axios.create({ baseURL: API_ROOT });
+apiSecured.interceptors.request.use(
+    (config) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : '';
+        if (token) {
+            config.headers = {
+                ...(config.headers || {}),
+                Authorization: `Bearer ${token}`,
+            } as any;
+        }
+        return config as InternalAxiosRequestConfig;
+    },
+    (error) => Promise.reject(error)
+);
 
 export const registrationApi = axios.create({
     baseURL: GATEWAY_BASE_URL,

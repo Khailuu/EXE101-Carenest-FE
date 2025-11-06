@@ -11,8 +11,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import AdminLayout from '../components/AdminLayout'; 
-import { authApi } from '@/constants/api';
-import { apiInstance } from '@/constants/api'; 
+import { apiSecured } from '@/constants/api'; 
 
 const { Option } = Select;
 
@@ -70,13 +69,27 @@ export default function UserManagementPage(): JSX.Element {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const adminApi = apiInstance.create({ baseURL: process.env.NEXT_PUBLIC_MANAGE_AUTH_API });
-                const response = await adminApi.get('/admin/accounts');
-                const apiData: ApiUserData[] = response.data.data;
-                const mappedData: UserData[] = apiData.map(user => ({
-                    key: user.id,
+                // Ensure URL: {AUTH_ROOT}/api/admin/accounts with Authorization header
+                                                const response = await apiSecured.get('/admin/accounts');
+                                                // Response shape example: { status, code, message, data: { content: [...], totalElements, ... } }
+                                                console.debug('[UserManagement] raw response', response?.data);
+                                                const raw = response?.data;
+                                                let apiData: any[] = [];
+                                                if (Array.isArray(raw?.data?.content)) apiData = raw.data.content;
+                                                else if (Array.isArray(raw?.data)) apiData = raw.data;
+                                                else if (Array.isArray(raw?.items)) apiData = raw.items;
+                                                else if (Array.isArray(raw)) apiData = raw;
+                                                else if (raw && typeof raw === 'object') {
+                                                    // try common nested shapes
+                                                    if (Array.isArray(raw.data?.items)) apiData = raw.data.items;
+                                                    else if (Array.isArray(raw.result)) apiData = raw.result;
+                                                    else apiData = [];
+                                                }
+
+                                const mappedData: UserData[] = (apiData || []).map(user => ({
+                    key: String(user.id),
                     avatar: 'https://i.pravatar.cc/150?img=' + Math.floor(Math.random() * 50), // Random avatar
-                    name: user.username,
+                    name: user.fullName || user.username || user.email,
                     email: user.email,
                     userType: mapRoleToUserType(user.role),
                     status: user.isActive ? 'Hoạt động' : 'Tạm khóa',
@@ -84,6 +97,7 @@ export default function UserManagementPage(): JSX.Element {
                     phone: '', // API không có
                     address: user.address
                 }));
+                console.debug('[UserManagement] fetched', mappedData.length, 'users');
                 setUserData(mappedData);
             } catch (error) {
                 console.error('Failed to fetch users:', error);
@@ -187,7 +201,7 @@ export default function UserManagementPage(): JSX.Element {
                     <Col xs={12} lg={4}>
                         <Button
                             size="large"
-                            className="w-full bg-blue-500 text-white border-blue-500 hover:!bg-blue-600 hover:!text-white"
+                            className="w-full bg-blue-500 text-white border-blue-500 hover:bg-blue-600 hover:text-white"
                         >
                             Tìm kiếm
                         </Button>
@@ -215,6 +229,7 @@ export default function UserManagementPage(): JSX.Element {
             <Table
                 columns={userColumns}
                 dataSource={filteredUserData}
+                rowKey="key"
                 pagination={{ pageSize: 10 }}
                 bordered
                 className="rounded-lg overflow-hidden shadow-lg"
