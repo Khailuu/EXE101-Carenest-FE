@@ -1,6 +1,17 @@
 
 import { apiInstance } from '@/constants/api';
 
+interface ApiResponse<T> {
+    data: T;
+    status?: number;
+    message?: string;
+    pagination?: {
+        total: number;
+        pageIndex: number;
+        pageSize: number;
+    };
+}
+
 const serviceDetailApi = apiInstance.create({ baseURL: 'https://gateway.devnest.io.vn' });
 
 interface ServiceDetailApiData {
@@ -15,13 +26,13 @@ interface ServiceDetailApiData {
 const BASE_SERVICE_DETAIL_API_URL = "/service-detail/api/servicedetail";
 
 export const serviceDetailService = {
-    getServiceDetails: async (shopId: string): Promise<ApiResponse<ServiceDetailApiData>> => {
+    getServiceDetails: async (shopId: string): Promise<ServiceDetailApiData[]> => {
         const pageIndex = 1;
         const pageSize = 100;
         const sortDirection = "asc";
 
         try {
-            const response = await serviceDetailApi.get(BASE_SERVICE_DETAIL_API_URL, {
+            const response = await serviceDetailApi.get<ApiResponse<ServiceDetailApiData[]>>(BASE_SERVICE_DETAIL_API_URL, {
                 params: { pageIndex, pageSize, sortDirection, shopId }
             });
 
@@ -31,13 +42,13 @@ export const serviceDetailService = {
         }
     },
 
-    getServiceDetailsByServiceId: async (serviceId: string): Promise<ApiResponse<ServiceDetailApiData>> => {
+    getServiceDetailsByServiceId: async (serviceId: string): Promise<ServiceDetailApiData[]> => {
         const pageIndex = 1;
         const pageSize = 10;
         const sortDirection = "asc";
 
         try {
-            const response = await serviceDetailApi.get(BASE_SERVICE_DETAIL_API_URL, {
+            const response = await serviceDetailApi.get<ApiResponse<ServiceDetailApiData[]>>(BASE_SERVICE_DETAIL_API_URL, {
                 params: { pageIndex, pageSize, sortDirection, serviceId }
             });
 

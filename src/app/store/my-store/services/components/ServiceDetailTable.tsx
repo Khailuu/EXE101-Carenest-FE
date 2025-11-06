@@ -32,7 +32,7 @@ export default function ServiceDetailTable({
                 setError(null);
                 try {
                     const response = await serviceDetailService.getServiceDetailsByServiceId(selectedServiceId);
-                    setFilteredDetails(response.items || []);
+                    // setFilteredDetails(response || []);
                 } catch (err) {
                     setError("Không thể tải chi tiết dịch vụ.");
                 } finally {

@@ -204,7 +204,7 @@ export default function OrdersPage() {
             key: 'action',
             width: 100,
             fixed: 'right' as const,
-            render: (_, record: Order) => (
+            render: (ya_: any, record: Order) => (
                 <Space>
                     <Button 
                         type="primary" 

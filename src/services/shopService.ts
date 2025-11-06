@@ -5,7 +5,7 @@ const orderApi = apiInstance.create({ baseURL: 'https://wispy-shani-nghi-dna-ef3
 
 const SHOP_API_URL = '/shop';
 
-interface Shop {
+export interface Shop {
     id: string;
     ownerId: string;
     name: string;
