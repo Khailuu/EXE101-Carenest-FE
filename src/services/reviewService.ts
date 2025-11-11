@@ -1,4 +1,4 @@
-import { apiSecured } from "@/constants/api";
+import { apiSecured, reviewApi } from "@/constants/api";
 
 export interface ReviewItem {
   id: string;
@@ -46,7 +46,7 @@ export const reviewService = {
       orderId: params.orderId,
     });
 
-    const res = await apiSecured.get(`/review?${query.toString()}`);
+    const res = await reviewApi.get(`/review?${query.toString()}`);
     return res.data as ReviewResponse;
   },
 };

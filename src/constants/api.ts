@@ -39,9 +39,10 @@ export const shopsApi1: AxiosInstance = axios.create({
 });
 
 // Auth service API roots (prefer env, fallback to production)
-const AUTH_ROOT = process.env.NEXT_PUBLIC_MANAGE_REVIEW_URL ?? "https://exotic-rosene-nghi-dna-e732b270.koyeb.app";
+const AUTH_ROOT = process.env.NEXT_PUBLIC_AUTH_API ?? "https://carenestauthorize-production.up.railway.app";
 const AUTH_API = `${AUTH_ROOT}/api/auth`;
 const API_ROOT = `${AUTH_ROOT}/api`;
+const API_REVIEW = process.env.NEXT_PUBLIC_REVIEW_API ?? "https://exotic-rosene-nghi-dna-e732b270.koyeb.app/api";
 
 // Public auth endpoints (/api/auth/...)
 export const authApi: AxiosInstance = axios.create({ baseURL: AUTH_API });
@@ -65,6 +66,21 @@ authApiSecured.interceptors.request.use(
 // Secured general API root (/api/...) for admin endpoints
 export const apiSecured: AxiosInstance = axios.create({ baseURL: API_ROOT });
 apiSecured.interceptors.request.use(
+    (config) => {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : '';
+        if (token) {
+            config.headers = {
+                ...(config.headers || {}),
+                Authorization: `Bearer ${token}`,
+            } as any;
+        }
+        return config as InternalAxiosRequestConfig;
+    },
+    (error) => Promise.reject(error)
+);
+
+export const reviewApi: AxiosInstance = axios.create({ baseURL: API_REVIEW });
+reviewApi.interceptors.request.use(
     (config) => {
         const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : '';
         if (token) {
