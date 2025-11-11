@@ -1,5 +1,5 @@
 "use client";
-import { Modal, Form, Input, Button, Select, Upload, Switch } from "antd";
+import { Modal, Form, Input, Button, Select, Upload, Switch, Tooltip } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { JSX, useEffect } from "react";
 import { ProductData, ProductCategoryData } from "../../hooks/useStoreData";
@@ -34,10 +34,11 @@ export default function ProductFormModal({
           image: editingItem.image
             ? [{ uid: "-1", name: "current-image", status: "done", url: editingItem.image }]
             : [],
+          imgUrls: editingItem.imgUrls || "",
         });
       } else {
         form.resetFields();
-        form.setFieldsValue({ status: true, image: [] });
+        form.setFieldsValue({ status: true, image: [], imgUrls: "" });
       }
     }
   }, [open, editingItem, form, isEditing]);
@@ -93,16 +94,25 @@ export default function ProductFormModal({
           <Switch checkedChildren="Hoạt động" unCheckedChildren="Ẩn" />
         </Form.Item>
 
-        <Form.Item
-          name="image"
-          label="Hình ảnh"
-          valuePropName="fileList"
-          getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
-        >
-          <Upload listType="picture" beforeUpload={() => false} maxCount={1}>
-            <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
-          </Upload>
+        <Form.Item name="imgUrls" label="Image URLs (JSON hoặc 1 URL)">
+          <Input.TextArea
+            rows={3}
+            placeholder='Ví dụ: "https://domain/a.jpg"'
+          />
         </Form.Item>
+
+        {!isEditing && (
+          <Form.Item
+            name="image"
+            label="Hình ảnh tải lên (chỉ khi tạo mới)"
+            valuePropName="fileList"
+            getValueFromEvent={(e) => (Array.isArray(e) ? e : e?.fileList)}
+          >
+            <Upload listType="picture" beforeUpload={() => false} maxCount={1}>
+              <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
+            </Upload>
+          </Form.Item>
+        )}
       </Form>
     </Modal>
   );

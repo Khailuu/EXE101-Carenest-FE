@@ -1,11 +1,7 @@
 import { Table, Button, Avatar, Tooltip, Popconfirm, Spin } from "antd"; 
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import {
-  ProductData,
-  formatCurrency,
-  renderStatusTag,
-} from "../hooks/useStoreData";
+import { ProductData, renderStatusTag } from "../hooks/useStoreData";
 import { JSX } from "react";
 
 interface ProductTableProps {

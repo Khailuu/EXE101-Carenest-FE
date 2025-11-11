@@ -97,7 +97,7 @@ const serviceColumns = (props: OrderServiceTableProps): ColumnsType<ServiceOrder
           <Button 
             size="small" 
             type="primary" 
-            className="bg-teal-500 hover:!bg-teal-600"
+            className="bg-teal-500 hover:bg-teal-600!"
             onClick={() => props.openDetailsModal(record)}
           >
             Xem

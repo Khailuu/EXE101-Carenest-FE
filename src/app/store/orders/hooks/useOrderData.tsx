@@ -133,6 +133,8 @@ export function useOrderData() {
   const [currentOrder, setCurrentOrder] = useState<OrderType | null>(null);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [form] = Form.useForm();
+  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
 
   // Logic lọc
@@ -153,6 +155,15 @@ export function useOrderData() {
     setCurrentOrder(null);
     setModalType(null);
     form.resetFields();
+  };
+
+  const openReviewModal = (orderId: string) => {
+    setReviewOrderId(orderId);
+    setIsReviewOpen(true);
+  };
+  const closeReviewModal = () => {
+    setIsReviewOpen(false);
+    setReviewOrderId(null);
   };
   
   // 1. Mở Modal Xem chi tiết (Cho cả Dịch vụ và Sản phẩm)
@@ -217,5 +228,10 @@ export function useOrderData() {
     openCancelServiceModal,
     handleServiceAction,
     closeModal,
+    // review
+    isReviewOpen,
+    reviewOrderId,
+    openReviewModal,
+    closeReviewModal,
   };
 }

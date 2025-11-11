@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
-import { Button, Card, Table, Tag, Space, Spin, Select, Pagination, Modal, Drawer } from "antd";
-import { EyeOutlined, CheckOutlined, CloseOutlined } from "@ant-design/icons";
+import { Button, Card, Table, Tag, Space, Spin, Select, Pagination, Drawer } from "antd";
+import { EyeOutlined, StarFilled, StarOutlined } from "@ant-design/icons";
+import ReviewModal from "./components/ReviewModal";
+import { reviewService } from "@/services/reviewService";
 import { useQuery } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/redux/store';
@@ -73,6 +75,9 @@ export default function OrdersPage() {
     // Detail modal states
     const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
     const [detailDrawerOpen, setDetailDrawerOpen] = React.useState(false);
+    const [reviewModalOpen, setReviewModalOpen] = React.useState(false);
+    const [reviewOrderId, setReviewOrderId] = React.useState<string | null>(null);
+    const [ordersWithReview, setOrdersWithReview] = React.useState<Record<string, boolean>>({});
 
     const handleApplyFilters = () => {
         setPagination(prev => ({
@@ -85,6 +90,13 @@ export default function OrdersPage() {
         setSelectedOrder(order);
         setDetailDrawerOpen(true);
     };
+
+    const handleViewReviews = (order: Order) => {
+        setReviewOrderId(order.id);
+        setReviewModalOpen(true);
+    };
+
+    // (Effect moved below ordersData declaration)
 
     // Fetch orders data
     const { data: ordersData, isLoading: ordersLoading } = useQuery({
@@ -104,6 +116,29 @@ export default function OrdersPage() {
         },
         enabled: !!shopId,
     });
+
+    // Load review existence for current page orders to color the button (after ordersData defined)
+    React.useEffect(() => {
+        const loadReviewFlags = async () => {
+            if (!ordersData?.items || ordersData.items.length === 0) {
+                setOrdersWithReview({});
+                return;
+            }
+            const flags: Record<string, boolean> = {};
+            await Promise.all(
+                ordersData.items.map(async (o: Order) => {
+                    try {
+                        const res = await reviewService.getReviews({ orderId: o.id, pageIndex: 1, pageSize: 1, sortDirection: 'asc' });
+                        flags[o.id] = (res?.data?.items?.length || 0) > 0;
+                    } catch {
+                        flags[o.id] = false;
+                    }
+                })
+            );
+            setOrdersWithReview(flags);
+        };
+        loadReviewFlags();
+    }, [ordersData?.items]);
 
     // Debug effect
     React.useEffect(() => {
@@ -165,7 +200,7 @@ export default function OrdersPage() {
             title: 'ID Đơn hàng',
             dataIndex: 'id',
             key: 'id',
-            width: 150,
+            width: "10%",
             render: (text: string) => <span className="font-mono text-xs">{text.slice(0, 8)}...</span>,
         },
         {
@@ -186,14 +221,14 @@ export default function OrdersPage() {
             title: 'Phương thức thanh toán',
             dataIndex: 'paymentMethod',
             key: 'paymentMethod',
-            width: 140,
+            width: "10%",
             render: (method: string) => <Tag color="blue">{PAYMENT_METHOD_MAP[method as keyof typeof PAYMENT_METHOD_MAP] || method}</Tag>,
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            width: 120,
+            width: "15%",
             render: (status: number) => {
                 const statusInfo = STATUS_MAP[status as keyof typeof STATUS_MAP] || { label: 'Không xác định', color: 'default' };
                 return <Tag color={statusInfo.color}>{statusInfo.label}</Tag>;
@@ -213,6 +248,15 @@ export default function OrdersPage() {
                         onClick={() => handleViewDetails(record)}
                     >
                         Xem
+                    </Button>
+                    <Button 
+                        size="small"
+                        type={ordersWithReview[record.id] ? 'primary' : 'default'}
+                        className={ordersWithReview[record.id] ? 'bg-[#FFF44F]! border-[#FFF44F]! hover:bg-[#F6E94B]! hover:border-[#F6E94B]! !text-black' : ''}
+                        icon={ordersWithReview[record.id] ? <StarFilled /> : <StarOutlined />}
+                        onClick={() => handleViewReviews(record)}
+                    >
+                        Đánh giá
                     </Button>
                 </Space>
             ),
@@ -373,7 +417,15 @@ export default function OrdersPage() {
                         </div>
                     </Spin>
                 )}
-            </Drawer>
+                        </Drawer>
+                        <ReviewModal
+                            open={reviewModalOpen}
+                            orderId={reviewOrderId || undefined}
+                            onCloseAction={() => {
+                                setReviewModalOpen(false);
+                                setReviewOrderId(null);
+                            }}
+                        />
         </div>
     );
 }

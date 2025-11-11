@@ -39,7 +39,7 @@ export const shopsApi1: AxiosInstance = axios.create({
 });
 
 // Auth service API roots (prefer env, fallback to production)
-const AUTH_ROOT = process.env.NEXT_PUBLIC_AUTH_API ?? "https://carenestauthorize-production.up.railway.app";
+const AUTH_ROOT = process.env.NEXT_PUBLIC_MANAGE_REVIEW_URL ?? "https://exotic-rosene-nghi-dna-e732b270.koyeb.app";
 const AUTH_API = `${AUTH_ROOT}/api/auth`;
 const API_ROOT = `${AUTH_ROOT}/api`;
 

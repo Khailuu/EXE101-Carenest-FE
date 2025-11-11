@@ -3,10 +3,11 @@ import type { ColumnsType } from 'antd/es/table';
 import { ProductOrder, Product, formatCurrency, renderStatusTag } from "../hooks/useOrderData";
 
 interface OrderProductTableProps {
-    data: ProductOrder[];
+  data: ProductOrder[];
+  openReviewAction?: (orderId: string) => void;
 }
 
-const productColumns: ColumnsType<ProductOrder> = [
+const productColumns = (props: OrderProductTableProps): ColumnsType<ProductOrder> => [
     {
         title: "Mã ĐH",
         dataIndex: "key",
@@ -84,20 +85,30 @@ const productColumns: ColumnsType<ProductOrder> = [
         width: 150,
         render: (text: any, record: ProductOrder) => (
           <div className="flex gap-2">
-            <Button size="small" type="primary" className="bg-teal-500 hover:!bg-teal-600">Xem</Button>
+            <Button size="small" type="primary" className="bg-teal-500 hover:bg-teal-600!">Xem</Button>
             {record.status === 'pending' && (
               <Button size="small" type="default" className="text-green-500 border-green-500">Giao hàng</Button>
+            )}
+            {(
+              <Button
+                size="small"
+                // type="default"
+                className="text-blue-500 border-blue-500"
+                onClick={() => props.openReviewAction && props.openReviewAction(record.key)}
+              >
+                Đánh giá
+              </Button>
             )}
           </div>
         )
       }
 ];
 
-export default function OrderProductTable({ data }: OrderProductTableProps) {
+export default function OrderProductTable(props: OrderProductTableProps) {
     return (
         <Table<ProductOrder>
-            columns={productColumns}
-            dataSource={data}
+      columns={productColumns(props)}
+            dataSource={props.data}
             pagination={{ pageSize: 5 }}
             scroll={{ x: 1200 }}
             className="orders-table"

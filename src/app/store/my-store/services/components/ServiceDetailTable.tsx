@@ -3,7 +3,7 @@ import { Table, Button, Popconfirm, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import { JSX, useEffect, useState } from "react";
-import { ServiceDetailData, ServiceData, ItemType, formatCurrency, renderStatusTag } from '../hooks/useStoreData';
+import { ServiceDetailData, ServiceData, ItemType, renderStatusTag } from '../hooks/useStoreData';
 import { serviceDetailService } from '@/services/serviceDetailService';
 
 interface ServiceDetailTableProps {
@@ -66,7 +66,7 @@ export default function ServiceDetailTable({
         title: "Giá", 
         dataIndex: "price", 
         key: "price", 
-        render: (text: number) => <span className="font-semibold">{formatCurrency(text)}đ</span>,
+        // render: (text: number) => <span className="font-semibold">{formatCurrency(text)}đ</span>,
         width: 120,
     },
     { 

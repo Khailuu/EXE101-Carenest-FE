@@ -45,6 +45,7 @@ export interface ProductData {
   description: string;
   status: "Hoạt động" | "Ngưng hoạt động";
   productCategoryId: string;
+  imgUrls?: string; // raw imgUrls string for edit usage
 }
 
 export interface ServiceDetailData {
@@ -70,15 +71,12 @@ export type StoreItemData =
   | ProductData
   | CategoryData
   | ServiceDetailData
-  | ProductCategoryData; // ✅ Thêm ProductCategoryData
+  | ProductCategoryData;
 
-// === HELPER ===
-export const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN").format(amount);
-
-const getStatusHexColor = (
-  status: "Hoạt động" | "Ngưng hoạt động"
-): string => (status === "Hoạt động" ? "#10B981" : "#DC2626");
+// Helper to map status to consistent hex colors for tags
+function getStatusHexColor(status: "Hoạt động" | "Ngưng hoạt động"): string {
+  return status === "Hoạt động" ? "#52c41a" : "#f5222d";
+}
 
 export const renderStatusTag = (
   status: "Hoạt động" | "Ngưng hoạt động"
@@ -159,6 +157,10 @@ export function useStoreData() {
           productCategoryId: String(item.productCategoryId || item.key),
           name: item.productName ?? item.name,
           image: firstImage,
+          imgUrls:
+            typeof item.imgUrls === "string"
+              ? item.imgUrls
+              : JSON.stringify(item.imgUrls || []),
         } as ProductData;
       });
     },
@@ -170,8 +172,17 @@ export function useStoreData() {
   useEffect(() => {
     if (productCategoriesQuery.data) {
       setProductCategoryData(productCategoriesQuery.data as ProductCategoryData[]);
+      // Auto-select first product category when none selected to show a default list
+      // NOTE: activeTab is declared later; avoid referencing it here to satisfy TS ordering.
+      if (
+        !selectedProductCategoryId &&
+        (productCategoriesQuery.data as ProductCategoryData[]).length > 0
+      ) {
+        const first = (productCategoriesQuery.data as ProductCategoryData[])[0];
+        setSelectedProductCategoryId(first.key);
+      }
     }
-  }, [productCategoriesQuery.data]);
+  }, [productCategoriesQuery.data, selectedProductCategoryId]);
 
   useEffect(() => {
     if (productsQuery.data) {
@@ -272,6 +283,7 @@ export function useStoreData() {
           description: full.description ?? "",
           status: full.status ? "Hoạt động" : "Ngưng hoạt động",
           productCategoryId: String(full.productCategoryId ?? (item as any).productCategoryId ?? ""),
+          imgUrls: typeof full.imgUrls === 'string' ? full.imgUrls : JSON.stringify(full.imgUrls || []),
         };
         setEditingItem(mapped);
         setIsFormModalOpen(true);
@@ -388,7 +400,7 @@ const handleSave = async (values: any, type: ItemType) => {
           productName: values.productName,
           description: values.description || "",
           status: Boolean(values.status),
-          imgUrls: "[]",
+          imgUrls: values.imgUrls || (editingItem as any).imgUrls || "[]",
         });
         message.success("Cập nhật sản phẩm thành công!");
       } else {

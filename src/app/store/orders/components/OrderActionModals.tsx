@@ -72,7 +72,7 @@ const ConfirmationModal: React.FC<OrderActionModalsProps> = ({
                             type="primary" 
                             htmlType="submit" 
                             danger={!isConfirm} 
-                            className={isConfirm ? 'bg-green-500 hover:!bg-green-600' : 'bg-red-600 hover:!bg-red-700'}
+                            className={isConfirm ? 'bg-green-500 !hover:bg-green-600' : 'bg-red-600 !hover:bg-red-700'}
                         >
                             {isConfirm ? 'Xác nhận Đơn' : 'Xác nhận Hủy'}
                         </Button>
